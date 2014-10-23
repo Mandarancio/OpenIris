@@ -268,3 +268,6 @@ class StringValue(BaseValue):
     def __add__(self, other):
         if self.compatible(other):
             return self.clone(self._name + '+' + other.name(), self.data() + other.data())
+
+    def __str__(self):
+        return str(self._data)
