@@ -1,6 +1,7 @@
 __author__ = 'martino'
 from core.BlockDef import BlockDef
-from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QColor, QMouseEvent, QGraphicsDropShadowEffect
+from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QColor, QMouseEvent, QGraphicsDropShadowEffect, \
+    QPainterPath
 from PyQt4.Qt import QRectF, QPoint
 from enum import Enum
 
@@ -31,6 +32,17 @@ class Block(QWidget):
         self.__action = Action.NONE
         self.__status = Status.EDIT
         self.__selected = False
+        if self.__def.resizable():
+            self.__init_corner()
+
+    def __init_corner(self):
+        path = QPainterPath()
+        path.moveTo(-2, -17)
+        path.lineTo(-17, -2)
+        path.lineTo(-2, -2)
+        path.closeSubpath()
+        self.__corner_path = path
+
 
     def selected(self):
         return self.__selected
@@ -44,7 +56,6 @@ class Block(QWidget):
             eff = self.graphicsEffect()
             del eff
             self.setGraphicsEffect(None)
-            self.repaint()
 
     def select(self):
         if not self.__selected:
@@ -70,6 +81,9 @@ class Block(QWidget):
         p.drawRect(3, 37, self.width() - 6, 10)
         p.setPen(pen)
         p.drawLine(2, 37, self.width() - 2, 37)
+        if self.__def.resizable():
+            p.setBrush(pen.brush())
+            p.drawPath(self.__corner_path.translated(self.width(), self.height()))
         p.setPen(self.__def.fg_color())
         f = p.font()
         f.setPointSize(10)
