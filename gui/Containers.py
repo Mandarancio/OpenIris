@@ -18,11 +18,14 @@ class Container:
         if block in self.__blocks:
             block.select()
 
-
-class EditorContainer(QWidget, Container):
+class ContainerWidget(QWidget, Container):
     def __init__(self, parent: QWidget=None):
         QWidget.__init__(self, parent)
         Container.__init__(self)
+
+class EditorContainer(ContainerWidget):
+    def __init__(self, parent: QWidget=None):
+        ContainerWidget.__init__(self, parent)
         pal = QPalette(self.palette())
         pal.setColor(QPalette.Background, QColor(55, 50, 47))
         self.setAutoFillBackground(True)
