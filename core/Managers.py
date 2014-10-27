@@ -1,5 +1,7 @@
 __author__ = 'martino'
 
+from core.UValue import *
+
 
 def remove_index(name):
     i = name.find('.')
@@ -8,7 +10,7 @@ def remove_index(name):
     index = i
     while index != -1:
         i = index
-        index = name.find('.', i+1)
+        index = name.find('.', i + 1)
 
     if name[i + 1] >= '0' and name[i + 1] <= '9':
         return name[:i]
@@ -49,3 +51,14 @@ class BlockManager:
         n += '.' + str(i)
         return n
 
+
+class ValueManager:
+    values = {0: IntegerValue, 1: FloatValue, 2: StringValue}
+
+    @staticmethod
+    def parse(s: str):
+        for k in ValueManager.values:
+            print(ValueManager.values[k])
+            o = ValueManager.values[k].parse(s)
+            if o is not None:
+                return o

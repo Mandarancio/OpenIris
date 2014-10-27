@@ -3,9 +3,9 @@ from core.Settings import Setting
 from core.Types import *
 from core.UValue import StringValue, BaseValue
 from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QColor, QMouseEvent, QGraphicsDropShadowEffect, \
-    QPainterPath
+    QPainterPath, QInputDialog, QLineEdit
 from PyQt4.Qt import QRectF, QPoint, Qt
-
+from core.Managers import ValueManager
 from enum import Enum
 
 
@@ -175,6 +175,13 @@ class Block(QWidget):
     def mouseReleaseEvent(self, e: QMouseEvent):
         self.__action = Action.NONE
 
+    def mouseDoubleClickEvent(self, QMouseEvent):
+        self._double_click()
+
+    def _double_click(self):
+        # to be defined in the sub blocks
+        return
+
     def set_pos(self, x: int, y: int):
         xx = x if x >= 0 else 0
         yy = y if y >= 0 else 0
@@ -217,3 +224,18 @@ class VariableBlock(Block):
             s = str(self.settings["Value"])
         p.drawText(QRectF(Block.padding + 5, self.height() / 2 - 5, self.width() - Block.padding * 2 - 10,
                           30), Qt.AlignCenter, s)
+
+    def _double_click(self):
+        s = 'None'
+        if self.settings["Value"].data() is not None:
+            s = str(self.settings["Value"])
+        text = QInputDialog.getText(self, 'Set Value',
+                                    'Value: ', QLineEdit.Normal,
+                                    s)[0]
+        print(text)
+        if not text == s:
+            v = ValueManager.parse(text)
+            self.settings["Value"] = v
+            self.inputs["Value"].type = v.type()
+            self.outputs["Value"].type = v.type()
+            self.repaint()

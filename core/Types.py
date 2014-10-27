@@ -26,7 +26,6 @@ class NumberType(Type):
     def __init__(self):
         Type.__init__(self, 'number', QColor(160, 44, 44))
 
-
 class StringType(Type):
     def __init__(self):
         Type.__init__(self, 'String', QColor(33, 119, 102))

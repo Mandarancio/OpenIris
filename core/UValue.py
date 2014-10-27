@@ -80,6 +80,10 @@ class BaseValue:
         """
         return BaseValue(name, NoneType(), data)
 
+    @staticmethod
+    def parse(s: str):
+        return None
+
     def copy(self):
         return BaseValue(self._name, self._type, self._data)
 
@@ -228,6 +232,16 @@ class IntegerValue(NumericalValue):
     def copy(self):
         return IntegerValue(self._name, self._data, unit=self.unit, v_max=int(self.max), v_min=int(self.min))
 
+    @staticmethod
+    def parse(s: str):
+        if s.find('.') != -1:
+            return None
+        try:
+            v = int(s)
+            return IntegerValue('Int', v)
+        except ValueError:
+            return None
+
 
 class FloatValue(NumericalValue):
     def __init__(self, name: str, val: float, v_min: float=float('nan'), v_max: float=float('nan'),
@@ -251,6 +265,14 @@ class FloatValue(NumericalValue):
     def copy(self):
         return FloatValue(self._name, self._data, unit=self.unit, v_max=self.max, v_min=self.min)
 
+    @staticmethod
+    def parse(s: str):
+        try:
+            v = float(s)
+            return IntegerValue('Float', v)
+        except ValueError:
+            return None
+
 
 class StringValue(BaseValue):
     def __init__(self, name: str, data: str=''):
@@ -272,3 +294,7 @@ class StringValue(BaseValue):
 
     def __str__(self):
         return str(self._data)
+
+    @staticmethod
+    def parse(s: str):
+        return StringValue('Str', s)
