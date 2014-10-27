@@ -1,6 +1,6 @@
 __author__ = 'martino'
 from core.BlockDef import BlockDef
-from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QColor, QMouseEvent
+from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QColor, QMouseEvent, QGraphicsDropShadowEffect
 from PyQt4.Qt import QRectF, QPoint
 from enum import Enum
 
@@ -19,8 +19,9 @@ class Status(Enum):
 
 
 class Block(QWidget):
-    border_color = QColor(55, 55, 55)
+    border_color = QColor(137, 117, 89)
     border_pen = QPen(border_color, 2)
+    selected_pen = QPen(QColor(255, 255, 255), 2)
 
     def __init__(self, b_def: BlockDef, parent: QWidget=None):
         QWidget.__init__(self, parent)
@@ -29,10 +30,37 @@ class Block(QWidget):
         self.__origin = QPoint(0, 0)
         self.__action = Action.NONE
         self.__status = Status.EDIT
+        self.__selected = False
+
+    def selected(self):
+        return self.__selected
+
+    def set_selected(self, selected):
+        self.__selected = selected
+
+    def deselect(self):
+        if self.__selected:
+            self.set_selected(False)
+            eff = self.graphicsEffect()
+            del eff
+            self.setGraphicsEffect(None)
+            self.repaint()
+
+    def select(self):
+        if not self.__selected:
+            self.set_selected(True)
+            effect = QGraphicsDropShadowEffect()
+            effect.setBlurRadius(20)
+            effect.setXOffset(0)
+            effect.setYOffset(0)
+            effect.setColor(QColor(0, 0, 0, 180))
+            self.setGraphicsEffect(effect)
+            self.raise_()
 
     def _paint(self, p: QPainter):
+        pen = Block.selected_pen if self.__selected else Block.border_pen
         p.setRenderHint(QPainter.Antialiasing, True)
-        p.setPen(Block.border_pen)
+        p.setPen(pen)
         p.setBrush(self.__def.bg_color())
         p.drawRoundedRect(2, 2, self.width() - 4, self.height() - 4, 8, 8)
         p.setBrush(self.__def.bg_color().darker())
@@ -40,7 +68,7 @@ class Block(QWidget):
         p.setBrush(self.__def.bg_color())
         p.setPen(QColor(0, 0, 0, 0))
         p.drawRect(3, 37, self.width() - 6, 10)
-        p.setPen(Block.border_pen)
+        p.setPen(pen)
         p.drawLine(2, 37, self.width() - 2, 37)
         p.setPen(self.__def.fg_color())
         f = p.font()
@@ -65,6 +93,12 @@ class Block(QWidget):
         return True
 
     def mousePressEvent(self, e: QMouseEvent):
+        self.parent().select(self)
+        if self.__def.resizable():
+            if abs(e.x() - self.width()) < 10 and abs(e.y() - self.height()) < 10 and self._check_action(Action.RESIZE):
+                self.__origin = e.pos()
+                self.__action = Action.RESIZE
+                return
         if self._check_action(Action.DRAG):
             self.__origin = e.pos()
             self.__action = Action.DRAG
@@ -73,8 +107,27 @@ class Block(QWidget):
         if self.__action == Action.DRAG:
             dx = e.x() - self.__origin.x()
             dy = e.y() - self.__origin.y()
-            self.parent().repaint(self.geometry())
-            self.setGeometry(self.x() + dx, self.y() + dy, self.width(), self.height())
+            self.set_pos(self.x() + dx, self.y() + dy)
+        elif self.__action == Action.RESIZE:
+            self.set_size(e.x(), e.y())
 
     def mouseReleaseEvent(self, e: QMouseEvent):
         self.__action = Action.NONE
+
+    def set_pos(self, x: int, y: int):
+        xx = x if x >= 0 else 0
+        yy = y if y >= 0 else 0
+        if xx + self.width() > self.parent().width():
+            xx = self.parent().width() - self.width()
+        if yy + self.height() > self.parent().height():
+            yy = self.parent().height() - self.height()
+        self.setGeometry(xx, yy, self.width(), self.height())
+
+    def set_size(self, w: int, h: int):
+        if self.__def.resizable():
+            width = w if w >= self.minimumWidth() else self.minimumWidth()
+            height = h if h >= self.minimumHeight() else self.minimumHeight()
+            self.setGeometry(self.x(), self.y(), width, height)
+
+    def settings(self):
+        return self.__def.settings

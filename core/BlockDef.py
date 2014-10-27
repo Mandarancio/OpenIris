@@ -12,6 +12,7 @@ class BlockDef:
         self.__type_name = type_name
         self._bg_color = QColor(159, 160, 144, 255)
         self._fg_color = QColor(255, 255, 255)
+        self._resizable = True
 
     def bg_color(self):
         return self._bg_color
@@ -21,3 +22,6 @@ class BlockDef:
 
     def type_name(self):
         return self.__type_name
+
+    def resizable(self):
+        return self._resizable
