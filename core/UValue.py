@@ -7,6 +7,7 @@ import math
 import sys
 
 from core.SIUnit import NoUnit, Unit
+from core.Types import *
 
 
 class BaseValue:
@@ -14,7 +15,7 @@ class BaseValue:
     "Abstract" universal value class (to not be used)
     """
 
-    def __init__(self, name: str, type_name: str, data=None):
+    def __init__(self, name: str, type_name: Type, data=None):
         """
         Constructor of BaseValue
         :param name: Name of the value (or variable)
@@ -77,7 +78,7 @@ class BaseValue:
         :param data: data to be stored in the new Value
         :return: the new Value
         """
-        return BaseValue(name, "void", data)
+        return BaseValue(name, NoneType(), data)
 
     def copy(self):
         return BaseValue(self._name, self._type, self._data)
@@ -109,7 +110,7 @@ class NumericalValue(BaseValue):
     "Abstract" class for managing numerical values
     """
 
-    def __init__(self, name: str, sub_type: str, val, unit: Unit=NoUnit(), v_min=float('nan'), v_max=float('nan')):
+    def __init__(self, name: str, sub_type: Type, val, unit: Unit=NoUnit(), v_min=float('nan'), v_max=float('nan')):
         """
         Constructor for NumericalValue
         :param name: Name of the value
@@ -206,7 +207,7 @@ class IntegerValue(NumericalValue):
         :param v_max: Maximum value (optional, by default + maxsize)
         :param unit: Unit of the value (optional, by default NoUnit)
         """
-        NumericalValue.__init__(self, name, "Integer", val, unit=unit, v_min=v_min, v_max=v_max)
+        NumericalValue.__init__(self, name, NumberType(), val, unit=unit, v_min=v_min, v_max=v_max)
         self._data = int(self._data)
 
     def _check_data(self, data):
@@ -231,7 +232,7 @@ class IntegerValue(NumericalValue):
 class FloatValue(NumericalValue):
     def __init__(self, name: str, val: float, v_min: float=float('nan'), v_max: float=float('nan'),
                  unit: Unit=NoUnit()):
-        NumericalValue.__init__(self, name, "Float", val, unit=unit, v_min=v_min, v_max=v_max)
+        NumericalValue.__init__(self, name, NumberType(), val, unit=unit, v_min=v_min, v_max=v_max)
         self._data = float(self._data)
 
     def _check_data(self, data):
@@ -253,7 +254,7 @@ class FloatValue(NumericalValue):
 
 class StringValue(BaseValue):
     def __init__(self, name: str, data: str=''):
-        BaseValue.__init__(self, name, 'String', data)
+        BaseValue.__init__(self, name, StringType(), data)
 
     def set_data(self, data):
         self._data = str(data)

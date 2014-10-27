@@ -24,3 +24,6 @@ class Setting:
     def set_data(self, data):
         if not self.__constant:
             self.__value.set_data(data)
+
+    def type(self):
+        return self.__value.type()

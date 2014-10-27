@@ -27,6 +27,8 @@ class EditorContainer(QWidget, Container):
         pal.setColor(QPalette.Background, QColor(55, 50, 47))
         self.setAutoFillBackground(True)
         self.setPalette(pal)
+        #TODO add grid settings and grid view
+        #TODO add modes
 
     def mousePressEvent(self, e):
         BlockManager.deselect_all()

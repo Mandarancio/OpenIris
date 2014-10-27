@@ -21,7 +21,7 @@ class BlockManager:
     @staticmethod
     def add_block(block):
         if not block in BlockManager.objects:
-            block.settings()["Name"].set_data(BlockManager.__check_name(block.settings()["Name"].data()))
+            block.settings["Name"].set_data(BlockManager.__check_name(block.settings["Name"].data()))
             BlockManager.objects.append(block)
 
     @staticmethod
@@ -44,7 +44,7 @@ class BlockManager:
         n = remove_index(n)
         i = 0
         for o in BlockManager.objects:
-            if remove_index(o.settings()["Name"].data()) == n:
+            if remove_index(o.settings["Name"].data()) == n:
                 i += 1
         n += '.' + str(i)
         return n
