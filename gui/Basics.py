@@ -22,21 +22,39 @@ class Status(Enum):
     DEBUG = 2
 
 
-class Input:
+class Node:
     def __init__(self, t: Type):
         self.type = t
+        self.connections = []
 
 
-class Output:
+class Input(Node):
     def __init__(self, t: Type):
-        self.type = t
+        Node.__init__(self, t)
+
+    def connect(self, out):
+        if self.type.name() == out.type.name() and not out in self.connections:
+            self.connections.append(out)
+            return True
+        return False
+
+
+class Output(Node):
+    def __init__(self, t: Type):
+        Node.__init__(self, t)
+
+    def connect(self, inp):
+        if self.type.name() == inp.type.name() and not inp in self.connections:
+            self.connections.append(inp)
+            return True
+        return False
 
 
 class Block(QWidget):
     # TODO add in-output
     border_color = QColor(137, 117, 89)
     border_pen = QPen(border_color, 2)
-    selected_pen = QPen(border_color.lighter(), 2)
+    selected_pen = QPen(border_color.lighter().lighter(), 2)
     padding = 5
 
     def __init__(self, type_name: str, name: str, parent: QWidget=None):
@@ -95,7 +113,7 @@ class Block(QWidget):
         p.setBrush(self._bg_color)
         p.drawRoundedRect(Block.padding, Block.padding, self.width() - 2 * Block.padding,
                           self.height() - 2 * Block.padding, 8, 8)
-        p.setBrush(self._bg_color.darker())
+        p.setBrush(self._bg_color.lighter(80))
         p.drawRoundedRect(Block.padding, Block.padding, self.width() - 2 * Block.padding, 35 + Block.padding, 8, 8)
         p.setBrush(self._bg_color)
         p.setPen(QColor(0, 0, 0, 0))
@@ -233,9 +251,36 @@ class VariableBlock(Block):
                                     'Value: ', QLineEdit.Normal,
                                     s)[0]
         print(text)
-        if not text == s:
+
+        if len(text) > 0 and not text == s:
             v = ValueManager.parse(text)
-            self.settings["Value"] = v
-            self.inputs["Value"].type = v.type()
-            self.outputs["Value"].type = v.type()
-            self.repaint()
+        elif text == s:
+            v = self.settings["Value"]
+        else:
+            v = BaseValue("Value", NoneType())
+        self.settings["Value"] = v
+        self.inputs["Value"].type = v.type()
+        self.outputs["Value"].type = v.type()
+        self.repaint()
+
+
+class Line:
+    def __init__(self, p1: QPoint, p2: QPoint, b1: Node, b2: Node=None):
+        self.p1 = p1
+        self.p2 = p2
+        self.n1 = b1
+        self.n2 = b2
+        self.selected = False
+
+    def paint(self, p: QPainter):
+        p1 = self.p1 if self.p1.x() < self.p2.x() else self.p2
+        p2 = self.p2 if self.p1.x() < self.p2.x() else self.p1
+        path = QPainterPath()
+        path.moveTo(p1)
+        dx = p2.x() - p1.x()
+        path.cubicTo(QPoint(p1.x() + dx / 3, p1.y()), QPoint(p2.x() - dx / 3, p2.y()), p2)
+        c = Block.border_color
+        if self.selected:
+            c = c.lighter().lighter()
+        p.setPen(QPen(c, 3))
+        p.drawPath(path)
