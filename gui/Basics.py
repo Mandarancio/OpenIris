@@ -5,7 +5,8 @@ from core.Utils import Action, Mode
 
 from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QMouseEvent, QGraphicsDropShadowEffect, \
     QPainterPath, QInputDialog, QLineEdit, QRegion
-from PyQt4.Qt import QRectF, QPoint, Qt
+from PyQt4.Qt import QRectF, QPoint, Qt, QObject
+import PyQt4.QtCore as QtCore
 
 from core.Settings import Setting
 from core.Types import *
@@ -158,6 +159,8 @@ class Line:
 
 
 class Input(Node):
+    value_recive = QtCore.pyqtSignal(BaseValue)
+
     def __init__(self, t: Type, pos: QPoint, parent):
         Node.__init__(self, t, pos, parent)
 
@@ -180,8 +183,13 @@ class Input(Node):
         self.lines.append(l)
         return l
 
+    def recive(self, value):
+        print(value.data())
+
 
 class Output(Node):
+    signal = QtCore.pyqtSignal(BaseValue)
+
     def __init__(self, t: Type, pos: QPoint, parent):
         Node.__init__(self, t, pos, parent)
 
