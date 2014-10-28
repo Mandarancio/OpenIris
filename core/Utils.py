@@ -16,3 +16,10 @@ class Mode(Enum):
     RUN = 2
     DEBUG = 3
 
+
+class TriggerMode(Enum):
+    AUTO = 0
+    EXTERNAL = 1
+    INTERNAL = 2
+    BOTH = 33
+

@@ -206,7 +206,7 @@ class Block(QWidget):
 
     def __init__(self, type_name: str, name: str, parent: QWidget=None):
         QWidget.__init__(self, parent)
-        self.settings = {"Name": Setting("Name", StringValue(name))}
+        self.settings = {"Name": Setting("Name", StringValue(name), parent=self)}
         self.outputs = {}
         self.inputs = {}
         self.__type_name = type_name
@@ -250,6 +250,9 @@ class Block(QWidget):
             x = self.width() - 10
             y = 40 + Block.padding + len(self.outputs) * 13
             self.outputs[name] = Output(t, QPoint(x, y), self)
+
+    def _add_setting(self, name, value, constant=False):
+        self.settings[name] = Setting(name, value, constant, self)
 
     def bg(self):
         return self._bg_color
