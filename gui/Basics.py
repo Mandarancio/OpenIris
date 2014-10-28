@@ -1,38 +1,43 @@
 __author__ = 'martino'
-from enum import Enum
 import math
 
-from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QColor, QMouseEvent, QGraphicsDropShadowEffect, \
-    QPainterPath, QInputDialog, QLineEdit
+from core.Utils import Action, Mode
+
+from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QMouseEvent, QGraphicsDropShadowEffect, \
+    QPainterPath, QInputDialog, QLineEdit, QRegion
 from PyQt4.Qt import QRectF, QPoint, Qt
 
 from core.Settings import Setting
 from core.Types import *
-from core.UValue import StringValue, BaseValue
+from core.UValue import StringValue, BaseValue, IntegerValue
 from core.Managers import ValueManager
-
-
-class Action(Enum):
-    NONE = 0
-    DRAG = 1
-    RESIZE = 2
-    CONNECTING = 3
-
-
-class Status(Enum):
-    EDIT = 0
-    RUN = 1
-    DEBUG = 2
 
 
 class Node:
     def __init__(self, t: Type, pos: QPoint, parent):
-        self.type = t
+        self.__type = t
         self.connections = []
         self.lines = []
         self.parent = parent
         self.pos = pos
         self.size = 9
+
+    def type(self):
+        return self.__type
+
+    def change_type(self, t: Type):
+        self.__type = t
+        if len(self.connections) > 0:
+            for c in self.connections:
+                if not self.compatible(c) or not c.compatible(self):
+                    l = self.line_to(c)
+                    l.remove()
+
+    def line_to(self, o):
+        for l in self.lines:
+            if l.connected_to(o):
+                return l
+        return None
 
     def abs_pos(self):
         return QPoint(self.pos.x() + self.size / 2 + self.parent.x(), self.pos.y() + self.size / 2 + self.parent.y())
@@ -42,18 +47,19 @@ class Node:
             self.connections.remove(n)
 
     def compatible(self, n):
-        return not n in self.connections and self.type.compatible(n.type)
+        return self.type().compatible(
+            n.type()) and n is not self and self.__class__ is not n.__class__
 
     def connect(self, n):
         if self.compatible(n):
             self.connections.append(n)
 
     def paint(self, p: QPainter):
-        p.setBrush(self.type.color())
+        p.setBrush(self.type().color())
         p.drawEllipse(self.pos.x(), self.pos.y(), self.size, self.size)
         if len(self.lines) > 0:
             pen = p.pen()
-            p.setBrush(self.type.color().darker())
+            p.setBrush(self.type().color().darker())
             p.setPen(QColor(0, 0, 0, 0))
             p.drawEllipse(self.pos.x() + 2, self.pos.y() + 2, self.size - 4, self.size - 4)
             p.setPen(pen)
@@ -85,6 +91,11 @@ class Line:
         self.__path = None
         self._w_parent = None
 
+    def connected_to(self, o: Node):
+        if o is self.n1 or o is self.n2:
+            return True
+        return False
+
     def remove(self):
         self.n1.lines.remove(self)
         self._w_parent.remove_line(self)
@@ -95,9 +106,9 @@ class Line:
 
     def connect(self, n2: Node):
         self.n2 = n2
-        n2.lines.append(self)
+        self.n1.connect(n2)
         n2.connect(self.n1)
-        self.n1.connect(self.n2)
+        n2.lines.append(self)
         self.update()
 
     def disconnect(self, n: Node):
@@ -152,7 +163,7 @@ class Input(Node):
 
     def connect(self, out):
         if self.compatible(out):
-            if len(self.connections) == 1:
+            if len(self.connections) >= 1:
                 self.lines[0].remove()
             self.connections.append(out)
             return True
@@ -175,7 +186,7 @@ class Output(Node):
         Node.__init__(self, t, pos, parent)
 
     def connect(self, inp):
-        if self.type.compatible(inp.type) and not inp in self.connections:
+        if self.compatible(inp):
             self.connections.append(inp)
             return True
         return False
@@ -188,7 +199,6 @@ class Output(Node):
 
 
 class Block(QWidget):
-    # TODO add in-output
     border_color = QColor(137, 117, 89)
     border_pen = QPen(border_color, 2)
     selected_pen = QPen(border_color.lighter().lighter(), 2)
@@ -206,11 +216,20 @@ class Block(QWidget):
         self.setMinimumSize(90, 120)
         self.__origin = QPoint(0, 0)
         self.__action = Action.NONE
-        self.__status = Status.EDIT
+        self.__status = Mode.EDIT_LOGIC
         self.__selected = False
         self.__line = None
         if self._resizable:
             self.__init_corner()
+
+    def name(self):
+        return self.settings["Name"].data()
+
+    def mode(self):
+        return self.__status
+
+    def action(self):
+        return self.__action
 
     def __init_corner(self):
         path = QPainterPath()
@@ -231,6 +250,12 @@ class Block(QWidget):
             x = self.width() - 10
             y = 40 + Block.padding + len(self.outputs) * 13
             self.outputs[name] = Output(t, QPoint(x, y), self)
+
+    def bg(self):
+        return self._bg_color
+
+    def title_bg(self):
+        return self._bg_color.light(80)
 
     def selected(self):
         return self.__selected
@@ -256,23 +281,36 @@ class Block(QWidget):
             self.setGraphicsEffect(effect)
             self.raise_()
 
+    def pen(self):
+        return Block.selected_pen if self.__selected else Block.border_pen
+
     def _paint(self, p: QPainter):
+        self._paint_bg(p)
+        self._paint_title(p)
+        p.setPen(QPen(self.pen().brush(), 1))
+        self._paint_ins(p)
+        self._paint_outs(p)
+        self._paint_content(p)
+
+    def _paint_bg(self, p: QPainter):
         pen = Block.selected_pen if self.__selected else Block.border_pen
         p.setRenderHint(QPainter.Antialiasing, True)
         p.setPen(pen)
-        p.setBrush(self._bg_color)
+        p.setBrush(self.bg())
         p.drawRoundedRect(Block.padding, Block.padding, self.width() - 2 * Block.padding,
                           self.height() - 2 * Block.padding, 8, 8)
-        p.setBrush(self._bg_color.lighter(80))
+        p.setBrush(self.title_bg())
         p.drawRoundedRect(Block.padding, Block.padding, self.width() - 2 * Block.padding, 35 + Block.padding, 8, 8)
-        p.setBrush(self._bg_color)
+        p.setBrush(self.bg())
         p.setPen(QColor(0, 0, 0, 0))
         p.drawRect(1 + Block.padding, 35 + Block.padding, self.width() - 2 - 2 * Block.padding, 10)
         p.setPen(pen)
-        p.drawLine(Block.padding, 35 + Block.padding, self.width() - Block.padding, 35 + Block.padding)
         if self._resizable:
             p.setBrush(pen.brush())
             p.drawPath(self.__corner_path.translated(self.width(), self.height()))
+
+    def _paint_title(self, p: QPainter):
+        p.drawLine(Block.padding, 35 + Block.padding, self.width() - Block.padding, 35 + Block.padding)
         p.setPen(self._fg_color)
         f = p.font()
         f.setPointSize(10)
@@ -285,10 +323,6 @@ class Block(QWidget):
         p.setPen(QColor(self._fg_color.red(), self._fg_color.green(), self._fg_color.blue(), 100))
         p.setFont(f)
         p.drawText(QRectF(4 + Block.padding, 18 + Block.padding, self.width() - 12, 15), str(self.__type_name))
-        p.setPen(QPen(pen.brush(), 1))
-        self._paint_ins(p)
-        self._paint_outs(p)
-        self._paint_content(p)
 
     def _paint_ins(self, p: QPainter):
         for i in self.inputs:
@@ -399,6 +433,62 @@ class Block(QWidget):
             i = self.inputs[k]
             i.update()
 
+    def _corner_path(self):
+        return self.__corner_path
+
+
+class WidgetBlock(Block):
+    def __init__(self, type_name: str, name: str, parent: QWidget=None):
+        Block.__init__(self, type_name, name, parent)
+        self._widget = None
+        self._bg_color = QColor(77, 77, 77, 220)
+        self.setMinimumHeight(60)
+
+    def title_bg(self):
+        return self._bg_color
+
+    def set_widget(self, w: QWidget):
+        self._widget = w
+        if self.mode() == Mode.EDIT_LOGIC:
+            w.setVisible(False)
+
+    def init_gui_settings(self):
+        self.settings['X'] = Setting('X', IntegerValue(5))
+        self.settings['Y'] = Setting('Y', IntegerValue(5))
+        self.settings['Width'] = Setting('Width', IntegerValue(90, self.minimumWidth()))
+        self.settings['Height'] = Setting('Height', IntegerValue(120, self.minimumHeight()))
+
+    def _paint_content(self, p: QPainter):
+        Block._paint_content(self, p)
+        self._paint_widget(p)
+
+    def _paint_widget(self, p):
+        if self._widget is not None:
+            p.setClipRect(Block.padding + 5, 5 + Block.padding, self.width() - 2 * Block.padding - 10,
+                          25)
+            p.translate(self.padding + 5, 5 + self.padding)
+            self._widget.render(p, QPoint(), QRegion(), QWidget.IgnoreMask)
+
+    def _paint_title(self, p: QPainter):
+        f = p.font()
+        f.setBold(True)
+        f.setPointSize(8)
+        p.setPen(QColor(self._fg_color.red(), self._fg_color.green(), self._fg_color.blue(), 180))
+        p.setFont(f)
+        p.drawText(QRectF(6 + Block.padding, 25 + Block.padding, self.width() - 12, 15), str(self.name()))
+
+    def _paint_bg(self, p: QPainter):
+        pen = self.pen()
+        p.setRenderHint(QPainter.Antialiasing, True)
+        p.setPen(pen)
+        p.setBrush(self.bg())
+        p.drawRoundedRect(Block.padding, Block.padding, self.width() - 2 * Block.padding,
+                          self.height() - 2 * Block.padding, 8, 8)
+        p.setPen(pen)
+        if self._resizable:
+            p.setBrush(pen.brush())
+            p.drawPath(self._corner_path().translated(self.width(), self.height()))
+
 
 class VariableBlock(Block):
     def __init__(self, name: str="Var", parent=None):
@@ -406,7 +496,7 @@ class VariableBlock(Block):
         self._resizable = False
         self._bg_color = QColor(233, 221, 175)
         self._fg_color = QColor(0, 0, 0)
-        self.settings["Value"] = BaseValue(NoneType())
+        self.settings["Value"] = Setting('Value', BaseValue(NoneType()))
         self._add_input('Value', NoneType())
         self._add_output('Value', NoneType())
 
@@ -423,28 +513,25 @@ class VariableBlock(Block):
         p.setFont(f)
         s = 'None'
         if self.settings["Value"].data() is not None:
-            s = str(self.settings["Value"])
+            s = str(self.settings["Value"].data())
         p.drawText(QRectF(Block.padding + 5, self.height() / 2 - 5, self.width() - Block.padding * 2 - 10,
                           30), Qt.AlignCenter, s)
 
     def _double_click(self):
         s = 'None'
         if self.settings["Value"].data() is not None:
-            s = str(self.settings["Value"])
+            s = str(self.settings["Value"].data())
         text, ok = QInputDialog.getText(self.parent(), 'Set Value',
                                         'Value: ', QLineEdit.Normal,
                                         s)
         if ok:
-            print(text)
-
             if len(text) > 0 and not text == s:
                 v = ValueManager.parse(text)
             elif text == s:
                 v = self.settings["Value"]
             else:
                 v = BaseValue(NoneType())
-            self.settings["Value"] = v
-            self.inputs["Value"].type = v.type()
-            self.outputs["Value"].type = v.type()
+            self.settings["Value"].set_value(v)
+            self.inputs["Value"].change_type(v.type())
+            self.outputs["Value"].change_type(v.type())
             self.repaint()
-

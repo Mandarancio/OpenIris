@@ -58,7 +58,6 @@ class ValueManager:
     @staticmethod
     def parse(s: str):
         for k in ValueManager.values:
-            print(ValueManager.values[k])
             o = ValueManager.values[k].parse(s)
             if o is not None:
                 return o

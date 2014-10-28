@@ -14,6 +14,9 @@ class Setting:
     def value(self):
         return self.__value.copy()
 
+    def set_value(self, value):
+        self.__value = value
+
     def is_constant(self):
         return self.__constant
 

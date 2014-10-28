@@ -1,8 +1,9 @@
 __author__ = 'martino'
 
-from gui.Basics import VariableBlock
+from gui.Basics import VariableBlock, WidgetBlock
 from gui.Containers import EditorContainer
-from PyQt4.QtGui import QApplication
+from PyQt4.QtGui import QApplication, QPushButton
+
 import sys
 
 a = QApplication(sys.argv)
@@ -16,6 +17,14 @@ for i in range(0, 4):
     b.setGeometry(x, 5, 90, 120)
     x += 5 + 90
     w.add_block(b)
+
+b = WidgetBlock('W', 'Wid', parent=w)
+pb = QPushButton(b)
+pb.setGeometry(0, 0, 100, 20)
+pb.setText('Test')
+b.set_widget(pb)
+
+w.add_block(b)
 
 w.show()
 
