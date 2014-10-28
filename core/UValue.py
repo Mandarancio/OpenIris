@@ -15,31 +15,15 @@ class BaseValue:
     "Abstract" universal value class (to not be used)
     """
 
-    def __init__(self, name: str, type_name: Type, data=None):
+    def __init__(self, type_name: Type, data=None):
         """
         Constructor of BaseValue
-        :param name: Name of the value (or variable)
         :param type_name: Type name
         :param data: data to be stored
         """
-        self._name = name
         self._type = type_name
         self._numerical = False
         self._data = data
-
-    def set_name(self, name: str):
-        """
-        Change the name of the value
-        :param name: new name
-        """
-        self._name = name
-
-    def name(self):
-        """
-        Get the name of this value
-        :return: the name of the value
-        """
-        return self._name
 
     def numerical(self):
         """
@@ -71,21 +55,20 @@ class BaseValue:
             self._data = data
 
     @staticmethod
-    def clone(name: str, data):
+    def clone(data):
         """
         Clone the current class
-        :param name: name of the new Value
         :param data: data to be stored in the new Value
         :return: the new Value
         """
-        return BaseValue(name, NoneType(), data)
+        return BaseValue(NoneType(), data)
 
     @staticmethod
     def parse(s: str):
         return None
 
     def copy(self):
-        return BaseValue(self._name, self._type, self._data)
+        return BaseValue(self._type, self._data)
 
     def _check_data(self, data):
         """
@@ -106,7 +89,7 @@ class BaseValue:
         return False
 
     def __str__(self):
-        return self._type + "(" + self._name + " : " + str(self._data) + ")"
+        return str(self._type) + "(" + str(self._data) + ")"
 
 
 class NumericalValue(BaseValue):
@@ -114,18 +97,20 @@ class NumericalValue(BaseValue):
     "Abstract" class for managing numerical values
     """
 
-    def __init__(self, name: str, sub_type: Type, val, unit: Unit=NoUnit(), v_min=float('nan'), v_max=float('nan')):
+    def __init__(self, sub_type: Type, val, unit: Unit=NoUnit(), v_min=float('nan'), v_max=float('nan')):
         """
         Constructor for NumericalValue
-        :param name: Name of the value
         :param val: Numerical value
         :param unit: Unit of the value (optional, by default NoUnit)
         """
-        BaseValue.__init__(self, name, sub_type, val)
+        BaseValue.__init__(self, sub_type, val)
         self._numerical = True
         self.max = v_max
         self.min = v_min
         self.unit = unit
+
+    def unit_print(self):
+        return self.unit.print(self.data())
 
     def _check_margin(self, data):
         """
@@ -145,17 +130,17 @@ class NumericalValue(BaseValue):
         return False
 
     def copy(self):
-        return NumericalValue(self._name, self._type, self._data, unit=Unit, v_min=self.min, v_max=self.max)
+        return NumericalValue(self._type, self._data, unit=Unit, v_min=self.min, v_max=self.max)
 
     def __str__(self):
-        return self.unit.print(self.data())
+        return str(self.data())
 
     def __add__(self, other):
         if self.compatible(other):
             if isinstance(self, IntegerValue) and isinstance(other, IntegerValue):
-                v = IntegerValue.clone(self._name + '+' + other.name(), self.data() + other.data())
+                v = IntegerValue.clone(self.data() + other.data())
             else:
-                v = FloatValue.clone(self._name + '+' + other.name(), float(self.data()) + float(other.data()))
+                v = FloatValue.clone(float(self.data()) + float(other.data()))
             if self.unit.name() == other.unit.name():
                 v.unit = self.unit
             else:
@@ -165,9 +150,9 @@ class NumericalValue(BaseValue):
     def __sub__(self, other):
         if self.compatible(other):
             if isinstance(self, IntegerValue) and isinstance(other, IntegerValue):
-                v = IntegerValue.clone(self._name + '-' + other.name(), self.data() - other.data())
+                v = IntegerValue.clone(self.data() - other.data())
             else:
-                v = FloatValue.clone(self._name + '-' + other.name(), float(self.data()) - float(other.data()))
+                v = FloatValue.clone(float(self.data()) - float(other.data()))
             if self.unit.name() == other.unit.name():
                 v.unit = self.unit
             else:
@@ -177,24 +162,24 @@ class NumericalValue(BaseValue):
     def __mul__(self, other):
         if self.compatible(other):
             if isinstance(self, IntegerValue) and isinstance(other, IntegerValue):
-                v = IntegerValue.clone(self._name + '-' + other.name(), self.data() * other.data())
+                v = IntegerValue.clone(self.data() * other.data())
             else:
-                v = FloatValue.clone(self._name + '-' + other.name(), float(self.data()) * float(other.data()))
+                v = FloatValue.clone(float(self.data()) * float(other.data()))
             v.unit = self.unit * other.unit
             return v
 
     def __truediv__(self, other):
         if self.compatible(other):
             if isinstance(self, IntegerValue) and isinstance(other, IntegerValue):
-                v = IntegerValue.clone(self._name + '/' + other.name(), self.data() / other.data())
+                v = IntegerValue.clone(self.data() / other.data())
             else:
-                v = FloatValue.clone(self._name + '/' + other.name(), float(self.data()) / float(other.data()))
+                v = FloatValue.clone(float(self.data()) / float(other.data()))
             v.unit = self.unit / other.unit
             return v
 
     def __floordiv__(self, other):
         if self.compatible(other):
-            v = IntegerValue.clone(self._name + '//' + other.name(), self.data() // other.data())
+            v = IntegerValue.clone(self.data() // other.data())
             v.unit = self.unit / other.unit
             return v
 
@@ -202,16 +187,15 @@ class NumericalValue(BaseValue):
 class IntegerValue(NumericalValue):
     """IntegerValue class, to store and manipulate Int values"""
 
-    def __init__(self, name: str, val: int, v_min: int=-sys.maxsize, v_max: int=sys.maxsize, unit: Unit=NoUnit()):
+    def __init__(self, val: int, v_min: int=-sys.maxsize, v_max: int=sys.maxsize, unit: Unit=NoUnit()):
         """
         Constructor for IntegerValue
-        :param name: Name of the value
         :param val: Integer value
         :param v_min: Minimum value (optional, by default - maxsize)
         :param v_max: Maximum value (optional, by default + maxsize)
         :param unit: Unit of the value (optional, by default NoUnit)
         """
-        NumericalValue.__init__(self, name, NumberType(), val, unit=unit, v_min=v_min, v_max=v_max)
+        NumericalValue.__init__(self, IntegerType(), val, unit=unit, v_min=v_min, v_max=v_max)
         self._data = int(self._data)
 
     def _check_data(self, data):
@@ -226,11 +210,11 @@ class IntegerValue(NumericalValue):
             self._data = int(data)
 
     @staticmethod
-    def clone(name: str, val):
-        return IntegerValue(name, val)
+    def clone(val):
+        return IntegerValue(val)
 
     def copy(self):
-        return IntegerValue(self._name, self._data, unit=self.unit, v_max=int(self.max), v_min=int(self.min))
+        return IntegerValue(self._data, unit=self.unit, v_max=int(self.max), v_min=int(self.min))
 
     @staticmethod
     def parse(s: str):
@@ -238,15 +222,15 @@ class IntegerValue(NumericalValue):
             return None
         try:
             v = int(s)
-            return IntegerValue('Int', v)
+            return IntegerValue(v)
         except ValueError:
             return None
 
 
 class FloatValue(NumericalValue):
-    def __init__(self, name: str, val: float, v_min: float=float('nan'), v_max: float=float('nan'),
+    def __init__(self, val: float, v_min: float=float('nan'), v_max: float=float('nan'),
                  unit: Unit=NoUnit()):
-        NumericalValue.__init__(self, name, NumberType(), val, unit=unit, v_min=v_min, v_max=v_max)
+        NumericalValue.__init__(self, FloatType(), val, unit=unit, v_min=v_min, v_max=v_max)
         self._data = float(self._data)
 
     def _check_data(self, data):
@@ -259,42 +243,42 @@ class FloatValue(NumericalValue):
             self._data = float(data)
 
     @staticmethod
-    def clone(name: str, val):
-        return FloatValue(name, val)
+    def clone(val):
+        return FloatValue(val)
 
     def copy(self):
-        return FloatValue(self._name, self._data, unit=self.unit, v_max=self.max, v_min=self.min)
+        return FloatValue(self._data, unit=self.unit, v_max=self.max, v_min=self.min)
 
     @staticmethod
     def parse(s: str):
         try:
             v = float(s)
-            return IntegerValue('Float', v)
+            return FloatValue(v)
         except ValueError:
             return None
 
 
 class StringValue(BaseValue):
-    def __init__(self, name: str, data: str=''):
-        BaseValue.__init__(self, name, StringType(), data)
+    def __init__(self, data: str=''):
+        BaseValue.__init__(self, StringType(), data)
 
     def set_data(self, data):
         self._data = str(data)
 
     @staticmethod
-    def clone(name: str, val):
-        return StringValue(name, val)
+    def clone(val):
+        return StringValue(val)
 
     def copy(self):
-        return StringValue(self._name, self.data())
+        return StringValue(self.data())
 
     def __add__(self, other):
         if self.compatible(other):
-            return self.clone(self._name + '+' + other.name(), self.data() + other.data())
+            return self.clone(self.data() + other.data())
 
     def __str__(self):
         return str(self._data)
 
     @staticmethod
     def parse(s: str):
-        return StringValue('Str', s)
+        return StringValue(s)

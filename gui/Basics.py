@@ -59,7 +59,7 @@ class Block(QWidget):
 
     def __init__(self, type_name: str, name: str, parent: QWidget=None):
         QWidget.__init__(self, parent)
-        self.settings = {"Name": Setting("Name", StringValue("Name", name))}
+        self.settings = {"Name": Setting("Name", StringValue(name))}
         self.outputs = {}
         self.inputs = {}
         self.__type_name = type_name
@@ -174,7 +174,7 @@ class Block(QWidget):
         self.parent().select(self)
         if self._resizable:
             if abs(e.x() - self.width()) < 8 + Block.padding and abs(
-                            e.y() - self.height()) < 8 + Block.padding and self._check_action(Action.RESIZE):
+                            eq.y() - self.height()) < 8 + Block.padding and self._check_action(Action.RESIZE):
                 self.__origin = e.pos()
                 self.__action = Action.RESIZE
                 return
@@ -193,7 +193,7 @@ class Block(QWidget):
     def mouseReleaseEvent(self, e: QMouseEvent):
         self.__action = Action.NONE
 
-    def mouseDoubleClickEvent(self, QMouseEvent):
+    def mouseDoubleClickEvent(self, e: QMouseEvent):
         self._double_click()
 
     def _double_click(self):
@@ -222,7 +222,7 @@ class VariableBlock(Block):
         self._resizable = False
         self._bg_color = QColor(233, 221, 175)
         self._fg_color = QColor(0, 0, 0)
-        self.settings["Value"] = BaseValue("Value", NoneType())
+        self.settings["Value"] = BaseValue(NoneType())
         self.inputs["Value"] = Input(NoneType())
         self.outputs["Value"] = Output(NoneType())
 
@@ -257,7 +257,7 @@ class VariableBlock(Block):
         elif text == s:
             v = self.settings["Value"]
         else:
-            v = BaseValue("Value", NoneType())
+            v = BaseValue(NoneType())
         self.settings["Value"] = v
         self.inputs["Value"].type = v.type()
         self.outputs["Value"].type = v.type()

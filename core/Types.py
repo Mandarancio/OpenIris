@@ -23,8 +23,19 @@ class NoneType(Type):
 
 
 class NumberType(Type):
+    def __init__(self, name: str='number'):
+        Type.__init__(self, name, QColor(160, 44, 44))
+
+
+class IntegerType(NumberType):
     def __init__(self):
-        Type.__init__(self, 'number', QColor(160, 44, 44))
+        NumberType.__init__(self, 'integer')
+
+
+class FloatType(NumberType):
+    def __init__(self):
+        NumberType.__init__(self, 'float')
+
 
 class StringType(Type):
     def __init__(self):

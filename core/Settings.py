@@ -17,7 +17,6 @@ class Setting:
     def is_constant(self):
         return self.__constant
 
-
     def data(self):
         return self.__value.data()
 
