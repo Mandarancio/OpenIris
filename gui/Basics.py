@@ -7,6 +7,7 @@ from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QColor, QMouseEven
 from PyQt4.Qt import QRectF, QPoint, Qt
 from core.Managers import ValueManager
 from enum import Enum
+import math
 
 
 class Action(Enum):
@@ -23,14 +24,30 @@ class Status(Enum):
 
 
 class Node:
-    def __init__(self, t: Type):
+    def __init__(self, t: Type, pos: QPoint, parent):
         self.type = t
         self.connections = []
+        self.parent = parent
+        self.pos = pos
+        self.size = 9
+
+    def paint(self, p: QPainter):
+        p.setBrush(self.type.color())
+        p.drawEllipse(self.pos.x(), self.pos.y(), self.size, self.size)
+
+    def contains(self, p: QPoint):
+        cx = self.pos.x() + self.size / 2.0
+        cy = self.pos.y() + self.size / 2.0
+        dx = p.x() - cx
+        dy = p.y() - cy
+        if math.sqrt(dx * dx + dy * dy) <= self.size + 1:
+            return True
+        return False
 
 
 class Input(Node):
-    def __init__(self, t: Type):
-        Node.__init__(self, t)
+    def __init__(self, t: Type, pos: QPoint, parent):
+        Node.__init__(self, t, pos, parent)
 
     def connect(self, out):
         if self.type.name() == out.type.name() and not out in self.connections:
@@ -40,8 +57,8 @@ class Input(Node):
 
 
 class Output(Node):
-    def __init__(self, t: Type):
-        Node.__init__(self, t)
+    def __init__(self, t: Type, pos: QPoint, parent):
+        Node.__init__(self, t, pos, parent)
 
     def connect(self, inp):
         if self.type.name() == inp.type.name() and not inp in self.connections:
@@ -81,6 +98,18 @@ class Block(QWidget):
         path.lineTo(-Block.padding, -Block.padding)
         path.closeSubpath()
         self.__corner_path = path
+
+    def _add_input(self, name: str, t: Type):
+        if not name in self.inputs:
+            x = 1
+            y = 40 + Block.padding + len(self.inputs) * 13
+            self.inputs[name] = Input(t, QPoint(x, y), self)
+
+    def _add_output(self, name: str, t: Type):
+        if not name in self.outputs:
+            x = self.width() - 10
+            y = 40 + Block.padding + len(self.outputs) * 13
+            self.outputs[name] = Output(t, QPoint(x, y), self)
 
     def selected(self):
         return self.__selected
@@ -144,16 +173,14 @@ class Block(QWidget):
         y = 40 + Block.padding
         x = 1
         for i in self.inputs:
-            p.setBrush(self.inputs[i].type.color())
-            p.drawEllipse(x, y, 9, 9)
+            self.inputs[i].paint(p)
             y += 13
 
     def _paint_outs(self, p: QPainter):
         y = 40 + Block.padding
         x = self.width() - 10
         for i in self.outputs:
-            p.setBrush(self.outputs[i].type.color())
-            p.drawEllipse(x, y, 9, 9)
+            self.outputs[i].paint(p)
             y += 13
 
     def _paint_content(self, p: QPainter):
@@ -174,7 +201,7 @@ class Block(QWidget):
         self.parent().select(self)
         if self._resizable:
             if abs(e.x() - self.width()) < 8 + Block.padding and abs(
-                            eq.y() - self.height()) < 8 + Block.padding and self._check_action(Action.RESIZE):
+                            e.y() - self.height()) < 8 + Block.padding and self._check_action(Action.RESIZE):
                 self.__origin = e.pos()
                 self.__action = Action.RESIZE
                 return
@@ -215,6 +242,13 @@ class Block(QWidget):
             height = h if h >= self.minimumHeight() else self.minimumHeight()
             self.setGeometry(self.x(), self.y(), width, height)
 
+    def setGeometry(self, *__args):
+        QWidget.setGeometry(self, *__args)
+        x = self.width() - 10
+        for k in self.outputs:
+            o = self.outputs[k]
+            o.pos.setX(x)
+
 
 class VariableBlock(Block):
     def __init__(self, name: str="Var", parent=None):
@@ -223,8 +257,8 @@ class VariableBlock(Block):
         self._bg_color = QColor(233, 221, 175)
         self._fg_color = QColor(0, 0, 0)
         self.settings["Value"] = BaseValue(NoneType())
-        self.inputs["Value"] = Input(NoneType())
-        self.outputs["Value"] = Output(NoneType())
+        self._add_input('Value', NoneType())
+        self._add_output('Value', NoneType())
 
     def _paint_content(self, p: QPainter):
         t = self.settings["Value"].type()
@@ -247,21 +281,22 @@ class VariableBlock(Block):
         s = 'None'
         if self.settings["Value"].data() is not None:
             s = str(self.settings["Value"])
-        text = QInputDialog.getText(self, 'Set Value',
-                                    'Value: ', QLineEdit.Normal,
-                                    s)[0]
-        print(text)
+        text, ok = QInputDialog.getText(self.parent(), 'Set Value',
+                                        'Value: ', QLineEdit.Normal,
+                                        s)
+        if ok:
+            print(text)
 
-        if len(text) > 0 and not text == s:
-            v = ValueManager.parse(text)
-        elif text == s:
-            v = self.settings["Value"]
-        else:
-            v = BaseValue(NoneType())
-        self.settings["Value"] = v
-        self.inputs["Value"].type = v.type()
-        self.outputs["Value"].type = v.type()
-        self.repaint()
+            if len(text) > 0 and not text == s:
+                v = ValueManager.parse(text)
+            elif text == s:
+                v = self.settings["Value"]
+            else:
+                v = BaseValue(NoneType())
+            self.settings["Value"] = v
+            self.inputs["Value"].type = v.type()
+            self.outputs["Value"].type = v.type()
+            self.repaint()
 
 
 class Line:
@@ -271,16 +306,22 @@ class Line:
         self.n1 = b1
         self.n2 = b2
         self.selected = False
+        self.__path = None
 
-    def paint(self, p: QPainter):
+    def compute_path(self):
         p1 = self.p1 if self.p1.x() < self.p2.x() else self.p2
         p2 = self.p2 if self.p1.x() < self.p2.x() else self.p1
         path = QPainterPath()
         path.moveTo(p1)
         dx = p2.x() - p1.x()
         path.cubicTo(QPoint(p1.x() + dx / 3, p1.y()), QPoint(p2.x() - dx / 3, p2.y()), p2)
+        self.__path = path
+
+    def paint(self, p: QPainter):
+        if self.__path is None:
+            self.compute_path()
         c = Block.border_color
         if self.selected:
             c = c.lighter().lighter()
         p.setPen(QPen(c, 3))
-        p.drawPath(path)
+        p.drawPath(self.__path)

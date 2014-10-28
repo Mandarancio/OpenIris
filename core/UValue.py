@@ -84,9 +84,7 @@ class BaseValue:
         :param other: the other Value object
         :return: if they are compatibles
         """
-        if other.type() == self.type():
-            return True
-        return False
+        return self._type.compatible(other.type())
 
     def __str__(self):
         return str(self._type) + "(" + str(self._data) + ")"
@@ -123,11 +121,6 @@ class NumericalValue(BaseValue):
         if not math.isnan(self.min) and self.min > data:
             return False
         return True
-
-    def compatible(self, other):
-        if other.numerical():
-            return True
-        return False
 
     def copy(self):
         return NumericalValue(self._type, self._data, unit=Unit, v_min=self.min, v_max=self.max)

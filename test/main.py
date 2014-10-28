@@ -17,7 +17,6 @@ for i in range(0, 4):
     x += 5 + 90
     w.add_block(b)
 
-
 w.show()
 
 sys.exit(a.exec_())

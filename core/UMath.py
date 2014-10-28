@@ -16,3 +16,8 @@ def u_sqrt(a: NumericalValue):
 def u_sin(a: NumericalValue):
     v = math.sin(a.data())
     return FloatValue(v)
+
+
+def u_cos(a: NumericalValue):
+    v = math.cos(a.data())
+    return FloatValue(v)
