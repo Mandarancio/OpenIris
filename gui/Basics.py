@@ -1,13 +1,15 @@
 __author__ = 'martino'
-from core.Settings import Setting
-from core.Types import *
-from core.UValue import StringValue, BaseValue
+from enum import Enum
+import math
+
 from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QColor, QMouseEvent, QGraphicsDropShadowEffect, \
     QPainterPath, QInputDialog, QLineEdit
 from PyQt4.Qt import QRectF, QPoint, Qt
+
+from core.Settings import Setting
+from core.Types import *
+from core.UValue import StringValue, BaseValue
 from core.Managers import ValueManager
-from enum import Enum
-import math
 
 
 class Action(Enum):
@@ -27,13 +29,34 @@ class Node:
     def __init__(self, t: Type, pos: QPoint, parent):
         self.type = t
         self.connections = []
+        self.lines = []
         self.parent = parent
         self.pos = pos
         self.size = 9
 
+    def abs_pos(self):
+        return QPoint(self.pos.x() + self.size / 2 + self.parent.x(), self.pos.y() + self.size / 2 + self.parent.y())
+
+    def disconnect(self, n):
+        if n in self.connections:
+            self.connections.remove(n)
+
+    def compatible(self, n):
+        return not n in self.connections and self.type.compatible(n.type)
+
+    def connect(self, n):
+        if self.compatible(n):
+            self.connections.append(n)
+
     def paint(self, p: QPainter):
         p.setBrush(self.type.color())
         p.drawEllipse(self.pos.x(), self.pos.y(), self.size, self.size)
+        if len(self.lines) > 0:
+            pen = p.pen()
+            p.setBrush(self.type.color().darker())
+            p.setPen(QColor(0, 0, 0, 0))
+            p.drawEllipse(self.pos.x() + 2, self.pos.y() + 2, self.size - 4, self.size - 4)
+            p.setPen(pen)
 
     def contains(self, p: QPoint):
         cx = self.pos.x() + self.size / 2.0
@@ -44,16 +67,107 @@ class Node:
             return True
         return False
 
+    def update(self):
+        for l in self.lines:
+            l.update()
+
+    def get_line(self):
+        return None
+
+
+class Line:
+    def __init__(self, p1: QPoint, p2: QPoint, b1: Node, b2: Node=None):
+        self.p1 = p1
+        self.p2 = p2
+        self.n1 = b1
+        self.n2 = b2
+        self.selected = False
+        self.__path = None
+        self._w_parent = None
+
+    def remove(self):
+        self.n1.lines.remove(self)
+        self._w_parent.remove_line(self)
+        if self.n2 is not None:
+            self.n1.disconnect(self.n2)
+            self.n2.disconnect(self.n1)
+            self.n2.lines.remove(self)
+
+    def connect(self, n2: Node):
+        self.n2 = n2
+        n2.lines.append(self)
+        n2.connect(self.n1)
+        self.n1.connect(self.n2)
+        self.update()
+
+    def disconnect(self, n: Node):
+        if self.n1 is n:
+            self.n1 = self.n2
+            self.n2.disconnect(n)
+            n.disconnect(self.n2)
+            p = self.p1
+            self.p1 = self.p2
+            self.p2 = p
+            self.n2 = None
+        else:
+            n.disconnect(self.n1)
+            self.n1.disconnect(n)
+            self.n2 = None
+
+    def update(self, p2=None):
+        if p2 is not None:
+            self.p2 = p2
+        elif self.n2 is not None:
+            self.p2 = self.n2.abs_pos()
+        self.p1 = self.n1.abs_pos()
+        self.compute_path()
+        if self._w_parent is not None:
+            self._w_parent.repaint()
+
+    def set_w_parent(self, parent):
+        self._w_parent = parent
+
+    def compute_path(self):
+        p1 = self.p1 if self.p1.x() < self.p2.x() else self.p2
+        p2 = self.p2 if self.p1.x() < self.p2.x() else self.p1
+        path = QPainterPath()
+        path.moveTo(p1)
+        dx = p2.x() - p1.x()
+        path.cubicTo(QPoint(p1.x() + dx / 3, p1.y()), QPoint(p2.x() - dx / 3, p2.y()), p2)
+        self.__path = path
+
+    def paint(self, p: QPainter):
+        if self.__path is None:
+            self.compute_path()
+        c = Block.border_color
+        if self.selected:
+            c = c.lighter().lighter()
+        p.setPen(QPen(c, 4))
+        p.drawPath(self.__path)
+
 
 class Input(Node):
     def __init__(self, t: Type, pos: QPoint, parent):
         Node.__init__(self, t, pos, parent)
 
     def connect(self, out):
-        if self.type.name() == out.type.name() and not out in self.connections:
+        if self.compatible(out):
+            if len(self.connections) == 1:
+                self.lines[0].remove()
             self.connections.append(out)
             return True
         return False
+
+    def get_line(self):
+        if len(self.lines) > 0:
+            l = self.lines[0]
+            self.lines.remove(l)
+            l.disconnect(self)
+            return l
+        p = self.abs_pos()
+        l = Line(p, p, self)
+        self.lines.append(l)
+        return l
 
 
 class Output(Node):
@@ -61,10 +175,16 @@ class Output(Node):
         Node.__init__(self, t, pos, parent)
 
     def connect(self, inp):
-        if self.type.name() == inp.type.name() and not inp in self.connections:
+        if self.type.compatible(inp.type) and not inp in self.connections:
             self.connections.append(inp)
             return True
         return False
+
+    def get_line(self):
+        p = self.abs_pos()
+        l = Line(p, p, self)
+        self.lines.append(l)
+        return l
 
 
 class Block(QWidget):
@@ -88,6 +208,7 @@ class Block(QWidget):
         self.__action = Action.NONE
         self.__status = Status.EDIT
         self.__selected = False
+        self.__line = None
         if self._resizable:
             self.__init_corner()
 
@@ -170,18 +291,12 @@ class Block(QWidget):
         self._paint_content(p)
 
     def _paint_ins(self, p: QPainter):
-        y = 40 + Block.padding
-        x = 1
         for i in self.inputs:
             self.inputs[i].paint(p)
-            y += 13
 
     def _paint_outs(self, p: QPainter):
-        y = 40 + Block.padding
-        x = self.width() - 10
         for i in self.outputs:
             self.outputs[i].paint(p)
-            y += 13
 
     def _paint_content(self, p: QPainter):
         # nothing to do
@@ -197,8 +312,30 @@ class Block(QWidget):
             return False
         return True
 
+    def node(self, p):
+        for k in self.inputs:
+            i = self.inputs[k]
+            if i.contains(p):
+                return i
+        for k in self.outputs:
+            o = self.outputs[k]
+            if o.contains(p):
+                return o
+        return None
+
+    def __create_line(self, n):
+        l = n.get_line()
+        self.parent().add_line(l)
+        return l
+
     def mousePressEvent(self, e: QMouseEvent):
         self.parent().select(self)
+        n = self.node(e.pos())
+        if n is not None:
+            self.__line = self.__create_line(n)
+            self.__action = Action.CONNECTING
+            return
+
         if self._resizable:
             if abs(e.x() - self.width()) < 8 + Block.padding and abs(
                             e.y() - self.height()) < 8 + Block.padding and self._check_action(Action.RESIZE):
@@ -216,8 +353,14 @@ class Block(QWidget):
             self.set_pos(self.x() + dx, self.y() + dy)
         elif self.__action == Action.RESIZE:
             self.set_size(e.x(), e.y())
+        elif self.__action == Action.CONNECTING and self.__line is not None:
+            p = QPoint(e.x() + self.x(), e.y() + self.y())
+            self.__line.update(p)
 
     def mouseReleaseEvent(self, e: QMouseEvent):
+        if self.__action == Action.CONNECTING and self.__line is not None:
+            self.parent().check_line(self.__line)
+            self.__line = None
         self.__action = Action.NONE
 
     def mouseDoubleClickEvent(self, e: QMouseEvent):
@@ -244,10 +387,17 @@ class Block(QWidget):
 
     def setGeometry(self, *__args):
         QWidget.setGeometry(self, *__args)
-        x = self.width() - 10
+        self.update_nodes()
+
+    def update_nodes(self):
+        x = self.width() - 5 - Block.padding
         for k in self.outputs:
             o = self.outputs[k]
             o.pos.setX(x)
+            o.update()
+        for k in self.inputs:
+            i = self.inputs[k]
+            i.update()
 
 
 class VariableBlock(Block):
@@ -298,30 +448,3 @@ class VariableBlock(Block):
             self.outputs["Value"].type = v.type()
             self.repaint()
 
-
-class Line:
-    def __init__(self, p1: QPoint, p2: QPoint, b1: Node, b2: Node=None):
-        self.p1 = p1
-        self.p2 = p2
-        self.n1 = b1
-        self.n2 = b2
-        self.selected = False
-        self.__path = None
-
-    def compute_path(self):
-        p1 = self.p1 if self.p1.x() < self.p2.x() else self.p2
-        p2 = self.p2 if self.p1.x() < self.p2.x() else self.p1
-        path = QPainterPath()
-        path.moveTo(p1)
-        dx = p2.x() - p1.x()
-        path.cubicTo(QPoint(p1.x() + dx / 3, p1.y()), QPoint(p2.x() - dx / 3, p2.y()), p2)
-        self.__path = path
-
-    def paint(self, p: QPainter):
-        if self.__path is None:
-            self.compute_path()
-        c = Block.border_color
-        if self.selected:
-            c = c.lighter().lighter()
-        p.setPen(QPen(c, 3))
-        p.drawPath(self.__path)

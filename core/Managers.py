@@ -12,7 +12,7 @@ def remove_index(name):
         i = index
         index = name.find('.', i + 1)
 
-    if name[i + 1] >= '0' and name[i + 1] <= '9':
+    if '0' <= name[i + 1] <= '9':
         return name[:i]
     return name
 
