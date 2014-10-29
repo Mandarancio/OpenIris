@@ -17,6 +17,26 @@ def remove_index(name):
     return name
 
 
+class TypeManager:
+    types = []
+
+    @staticmethod
+    def add_type(t):
+        if t not in TypeManager.types:
+            TypeManager.types.append(t)
+
+    @staticmethod
+    def get_types():
+        return TypeManager.types
+
+    @staticmethod
+    def get_type(name):
+        for t in TypeManager.types:
+            if t.name() == name:
+                return t
+        return None
+
+
 class BlockManager:
     objects = []
 

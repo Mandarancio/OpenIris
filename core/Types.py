@@ -1,5 +1,5 @@
 __author__ = 'martino'
-from PyQt4.QtGui import QColor
+from PyQt4.QtGui import QColor, QLabel, QSpinBox, QComboBox
 
 
 class Type:
@@ -21,6 +21,19 @@ class Type:
     def __str__(self):
         return self.__name
 
+    @staticmethod
+    def edit_widget(v):
+        return QLabel(str(v))
+
+
+class TypeOfType(Type):
+    def __init__(self):
+        Type.__init__(self, 'type', QColor(125, 125, 125))
+
+    @staticmethod
+    def edit_widget(v):
+        return QComboBox()
+
 
 class NoneType(Type):
     def __init__(self):
@@ -28,6 +41,10 @@ class NoneType(Type):
 
     def compatible(self, other):
         return True
+
+    @staticmethod
+    def edit_widget(v):
+        return QSpinBox(v)
 
 
 class NumberType(Type):
