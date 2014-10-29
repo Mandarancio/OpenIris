@@ -2,6 +2,7 @@ __author__ = 'martino'
 from PyQt4.QtGui import QWidget, QPalette, QColor, QPainter, QPaintEvent
 from PyQt4.Qt import QPoint
 from core.Managers import BlockManager
+from gui.Basics import Label, Input
 
 
 class Container:
@@ -29,6 +30,15 @@ class Container:
         if line in self.lines:
             self.lines.remove(line)
 
+    def get_node(self, p):
+        for b in self.blocks:
+            if b.geometry().contains(p):
+                p1 = QPoint(p.x() - b.x(), p.y() - b.y())
+                n = b.node(p1)
+                if n is not None:
+                    return n
+        return None
+
     def check_line(self, line):
         p = line.p2
         for b in self.blocks:
@@ -39,6 +49,14 @@ class Container:
                     line.connect(n)
                     return
         line.remove()
+
+    def delete_label(self, l: Label):
+        if l is not None:
+            l.destroy()
+            del l
+
+    def create_label(self, name, n):
+        return None
 
 
 class ContainerWidget(QWidget, Container):
@@ -61,12 +79,31 @@ class ContainerWidget(QWidget, Container):
         Container.check_line(self, line)
         self.repaint()
 
+    def delete_label(self, l: Label):
+        if l is not None:
+            l.deleteLater()
+
+    def create_label(self, name, n):
+        l = Label(name, n, self)
+        x = n.abs_pos().x() + 10
+        if isinstance(n, Input):
+            x = n.abs_pos().x() - 10 - l.width()
+
+        if x < 0:
+            x = 0
+        elif x + l.width() > self.width():
+            x = self.width() - l.width()
+
+        l.setGeometry(x, n.abs_pos().y() - l.height() / 2, l.width(), l.height())
+        l.show()
+        return l
+
 
 class EditorContainer(ContainerWidget):
     def __init__(self, parent: QWidget=None):
         ContainerWidget.__init__(self, parent)
         pal = QPalette(self.palette())
-        self.setMinimumSize(250,250)
+        self.setMinimumSize(250, 250)
         pal.setColor(QPalette.Background, QColor(55, 50, 47))
         self.setAutoFillBackground(True)
         self.setPalette(pal)

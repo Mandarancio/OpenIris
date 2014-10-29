@@ -1,7 +1,7 @@
 __author__ = 'martino'
 
-from PyQt4.QtGui import QWidget, QGridLayout, QPainter, QPaintEvent, QColor, QPen, QMouseEvent
-from PyQt4.Qt import Qt, QPoint
+from PyQt4.QtGui import QWidget, QGridLayout, QPainter, QPaintEvent, QColor, QPen, QMouseEvent, QComboBox
+from PyQt4.QtCore import Qt
 from gui.Containers import EditorContainer
 
 
@@ -10,6 +10,19 @@ class OIMainToolbar(QWidget):
         QWidget.__init__(self, parent)
         self.setMaximumHeight(35)
         self.setMinimumHeight(35)
+        self.__layout = QGridLayout(self)
+        self.__mode_box = None
+        self.init_gui()
+
+    def init_gui(self):
+        self.__layout.setMargin(0)
+
+        self.__mode_box = QComboBox(self)
+        self.__mode_box.addItem('Logic')
+        self.__mode_box.addItem('GUI')
+        # self.__mode_box.setMaximumWidth(100)
+
+        self.__layout.addWidget(self.__mode_box, 0, 0)
 
 
 class OIRightShelf(QWidget):

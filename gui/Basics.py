@@ -5,7 +5,7 @@ from core.Utils import Action, Mode
 
 from PyQt4.QtGui import QWidget, QPainter, QPaintEvent, QPen, QMouseEvent, QGraphicsDropShadowEffect, \
     QPainterPath, QInputDialog, QLineEdit, QRegion
-from PyQt4.Qt import QRectF, QPoint, Qt
+from PyQt4.Qt import QRectF, QPoint, Qt, QRect
 import PyQt4.QtCore as QtCore
 
 from core.Settings import Setting
@@ -91,6 +91,10 @@ class Line:
         self.selected = False
         self.__path = None
         self._w_parent = None
+        self.__status = False
+
+    def status(self, val: bool):
+        self.__status = val
 
     def connected_to(self, o: Node):
         if o is self.n1 or o is self.n2:
@@ -154,6 +158,8 @@ class Line:
         c = Block.border_color
         if self.selected:
             c = c.lighter().lighter()
+        if not self.__status:
+            c = QColor(255, 100, 100, 180)
         p.setPen(QPen(c, 4))
         p.drawPath(self.__path)
 
@@ -210,6 +216,27 @@ class Output(Node):
         self.signal.emit(value)
 
 
+class Label(QWidget):
+    def __init__(self, name, node, parent):
+        QWidget.__init__(self, parent)
+        self.__node = node
+        self.__name = name + ' : ' + str(self.__node.type())
+        r = self.fontMetrics().boundingRect(self.__name)
+        self.setFixedSize(r.width() + 10, r.height() + 10)
+
+    def node(self):
+        return self.__node
+
+    def paintEvent(self, e: QPaintEvent):
+        if e.isAccepted():
+            p = QPainter(self)
+            p.setPen(QColor(255, 255, 255))
+            c = self.__node.type().color().darker()
+            p.setBrush(QColor(c.red(), c.green(), c.blue(), 180))
+            p.drawRoundedRect(1, 1, self.width() - 2, self.height() - 2, 5, 5)
+            p.drawText(QRect(5, 5, self.width() - 10, self.height() - 10), Qt.AlignCenter, self.__name)
+
+
 class Block(QWidget):
     border_color = QColor(137, 117, 89)
     border_pen = QPen(border_color, 2)
@@ -231,6 +258,8 @@ class Block(QWidget):
         self.__status = Mode.EDIT_LOGIC
         self.__selected = False
         self.__line = None
+        self.__label = None
+        self.setMouseTracking(True)
         if self._resizable:
             self.__init_corner()
 
@@ -372,6 +401,17 @@ class Block(QWidget):
                 return o
         return None
 
+    def node_name(self, n):
+        for k in self.inputs:
+            i = self.inputs[k]
+            if n == i:
+                return k
+        for k in self.outputs:
+            o = self.outputs[k]
+            if o == n:
+                return k
+        return ''
+
     def __create_line(self, n):
         l = n.get_line()
         self.parent().add_line(l)
@@ -380,10 +420,18 @@ class Block(QWidget):
     def mousePressEvent(self, e: QMouseEvent):
         self.parent().select(self)
         n = self.node(e.pos())
+
         if n is not None:
             self.__line = self.__create_line(n)
             self.__action = Action.CONNECTING
+            if self.__label is not None and self.__label.node() is not n:
+                self.parent().delete_label(self.__label)
+                self.__label = None
             return
+
+        if self.__label is not None:
+            self.parent().delete_label(self.__label)
+            self.__label = None
 
         if self._resizable:
             if abs(e.x() - self.width()) < 8 + Block.padding and abs(
@@ -404,13 +452,41 @@ class Block(QWidget):
             self.set_size(e.x(), e.y())
         elif self.__action == Action.CONNECTING and self.__line is not None:
             p = QPoint(e.x() + self.x(), e.y() + self.y())
+
+            n = self.parent().get_node(p)
+            if n is not None and n.compatible(self.__line.n1):
+                self.__line.status(True)
+            else:
+                self.__line.status(False)
+
             self.__line.update(p)
+
+        else:
+            n = self.node(e.pos())
+            if self.__label is None and n is not None:
+                self.__label = self.parent().create_label(self.node_name(n), n)
+            elif self.__label is not None and self.__label.node() is not n and n is not None:
+                self.parent().delete_label(self.__label)
+                self.__label = self.parent().create_label(self.node_name(n), n)
+            elif n is None:
+                self.parent().delete_label(self.__label)
+                self.__label = None
 
     def mouseReleaseEvent(self, e: QMouseEvent):
         if self.__action == Action.CONNECTING and self.__line is not None:
             self.parent().check_line(self.__line)
             self.__line = None
         self.__action = Action.NONE
+        if self.__label is not None:
+            self.parent().delete_label(self.__label)
+            self.__label = None
+
+    def leaveEvent(self, e):
+        QWidget.leaveEvent(self, e)
+        if self.__label is not None:
+            self.parent().delete_label(self.__label)
+            self.__label = None
+
 
     def mouseDoubleClickEvent(self, e: QMouseEvent):
         self._double_click()
