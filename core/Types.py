@@ -47,6 +47,24 @@ class NoneType(Type):
         return QSpinBox(v)
 
 
+class PolyType(Type):
+    def __init__(self):
+        Type.__init__(self, 'poly', QColor(255, 255, 255))
+        self.__type = NoneType()
+
+    def color(self):
+        return self.__type.color()
+
+    def name(self):
+        return self.__type.color()
+
+    def compatible(self, other):
+        return self.__type.compatible(other)
+
+    def set_type(self, t):
+        self.__type = t
+
+
 class NumberType(Type):
     def __init__(self, name: str='number'):
         Type.__init__(self, name, QColor(160, 44, 44))

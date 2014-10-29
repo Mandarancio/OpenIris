@@ -66,6 +66,7 @@ class EditorContainer(ContainerWidget):
     def __init__(self, parent: QWidget=None):
         ContainerWidget.__init__(self, parent)
         pal = QPalette(self.palette())
+        self.setMinimumSize(250,250)
         pal.setColor(QPalette.Background, QColor(55, 50, 47))
         self.setAutoFillBackground(True)
         self.setPalette(pal)
