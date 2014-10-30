@@ -1,9 +1,9 @@
 __author__ = 'martino'
 from core.Settings import Setting
-from core.UValue import StringValue, BaseValue, IntegerValue
+from core.UValue import StringValue, BaseValue, FloatValue
 from core.Managers import BlockManager
 from core.Types import Type
-from PyQt4.QtCore import pyqtSignal, QObject
+from PyQt4.QtCore import pyqtSignal, QObject, QRect
 from gui.OIBlocks import *
 from gui.OIContainers import ContainerWidget
 
@@ -209,13 +209,13 @@ class BlockDefinition(QObject):
         self.init_settings()
 
     def init_settings(self):
-        s = Setting('X', IntegerValue(0))
+        s = Setting('X', FloatValue(.0))
         self.__add_setting(s)
-        s = Setting('Y', IntegerValue(0))
+        s = Setting('Y', FloatValue(.0))
         self.__add_setting(s)
-        s = Setting('Width', IntegerValue(90))
-        self.__add_setting(s)
-        s = Setting('Height', IntegerValue(120))
+        s = Setting('Width', FloatValue(1.0))
+        self.__add_settting(s)
+        s = Setting('Height', FloatValue(1.5))
         self.__add_setting(s)
 
     def __add_setting(self, s):
@@ -274,3 +274,11 @@ class BlockDefinition(QObject):
 
     def get_widget(self, cont):
         return OIBlock(self, cont)
+	
+    def get_geometry(self, dpi=1.0):
+        x=self.get_setting('X')*dpi
+        y=self.get_setting('Y')*dpi
+        w=self.get_setting('Width')*dpi
+        h=self.get_setting('Height')*dpi
+        return QRect(round(x),round(y),round(w),round(h))
+

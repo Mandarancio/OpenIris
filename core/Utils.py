@@ -2,6 +2,8 @@ __author__ = 'Martino Ferrari'
 
 from enum import Enum
 
+class Info:
+	dpi=1
 
 class Action(Enum):
     NONE = 0

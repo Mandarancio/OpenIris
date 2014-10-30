@@ -1,6 +1,7 @@
 __author__ = 'martino'
 from PyQt4.QtGui import QWidget, QPainter, QColor, QPen, QPaintEvent, QMouseEvent
 from PyQt4.QtCore import QRectF, QPoint, Qt
+from core.Utils import Info
 
 
 class OINode:
@@ -38,8 +39,7 @@ class OIBlock(QWidget):
         self.__block.repaint.connect(self.repaint)
         self._bg_color = QColor(159, 160, 144, 255)
         self._fg_color = QColor(255, 255, 255)
-        self.setGeometry(block.get_setting('X'), block.get_setting('Y'), block.get_setting('Width'),
-                         block.get_setting('Height'))
+        self.setGeometry(block.get_geometry(Info.dpi))
 
         block.selected.connect(self.repaint)
 
