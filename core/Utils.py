@@ -23,3 +23,9 @@ class TriggerMode(Enum):
     INTERNAL = 2
     BOTH = 33
 
+
+class Alignment(Enum):
+    Left = 0
+    Right = 1
+    Top = 2
+    Bottom = 3

@@ -39,11 +39,10 @@ class TypeManager:
 
 class BlockManager:
     objects = []
-
-    @staticmethod
-    def name_changed(value, parent):
-        print(value.data())
-        print(parent.name())
+    #
+    # @staticmethod
+    # def name_changed(value, parent):
+    #     print(value.data())
 
     @staticmethod
     def get_block(name: str):
@@ -55,7 +54,7 @@ class BlockManager:
     @staticmethod
     def add_block(block):
         if not block in BlockManager.objects:
-            block.settings["Name"].value_update.connect(BlockManager.name_changed)
+            # block.settings["Name"].value_update.connect(BlockManager.name_changed)
             block.settings["Name"].set_data(BlockManager.__check_name(block.settings["Name"].data()))
             BlockManager.objects.append(block)
 
