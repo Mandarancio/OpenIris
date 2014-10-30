@@ -213,9 +213,9 @@ class BlockDefinition(QObject):
         self.__add_setting(s)
         s = Setting('Y', FloatValue(.0))
         self.__add_setting(s)
-        s = Setting('Width', FloatValue(1.0))
-        self.__add_settting(s)
-        s = Setting('Height', FloatValue(1.5))
+        s = Setting('Width', FloatValue(0.9))
+        self.__add_setting(s)
+        s = Setting('Height', FloatValue(1.2))
         self.__add_setting(s)
 
     def __add_setting(self, s):

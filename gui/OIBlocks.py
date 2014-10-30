@@ -29,7 +29,7 @@ class OIBlock(QWidget):
     border_color = QColor(137, 117, 89)
     border_pen = QPen(border_color, 2)
     selected_pen = QPen(border_color.lighter().lighter(), 2)
-    padding = 5
+    padding = 0.05
 
     def __init__(self, block, parent):
         QWidget.__init__(self, parent)
