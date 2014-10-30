@@ -48,6 +48,10 @@ class Node:
         if n in self.connections:
             self.connections.remove(n)
 
+    def delete(self):
+        for l in self.lines:
+            l.remove()
+
     def compatible(self, n):
         return self.type().compatible(
             n.type()) and n is not self and self.__class__ is not n.__class__
@@ -159,6 +163,9 @@ class Line:
         path.cubicTo(QPoint(p1.x() + dx / 3, p1.y()), QPoint(p2.x() - dx / 3, p2.y()), p2)
         self.__path = path
 
+    def path(self):
+        return self.__path
+
     def paint(self, p: QPainter):
         if not self.n1.parent.isVisible() or (self.n2 is not None and not self.n2.parent.isVisible()):
             return
@@ -269,6 +276,15 @@ class Block(QWidget):
         self.setMouseTracking(True)
         if self._resizable:
             self.__init_corner()
+
+    def remove_connections(self):
+        for k in self.inputs:
+            self.inputs[k].delete()
+        for k in self.outputs:
+            self.outputs[k].delete()
+
+    def delete(self):
+        self.remove_connections()
 
     def name(self):
         return self.settings["Name"].data()

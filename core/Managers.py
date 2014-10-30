@@ -60,6 +60,11 @@ class BlockManager:
             BlockManager.objects.append(block)
 
     @staticmethod
+    def remove_block(block):
+        if block in BlockManager.objects:
+            BlockManager.objects.remove(block)
+
+    @staticmethod
     def get_selected():
         sel = []
         for o in BlockManager.objects:

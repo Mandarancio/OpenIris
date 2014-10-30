@@ -1,6 +1,6 @@
 __author__ = 'martino'
-from PyQt4.QtGui import QWidget, QPalette, QColor, QPainter, QPaintEvent
-from PyQt4.Qt import QPoint
+from PyQt4.QtGui import QWidget, QPalette, QColor, QPainter, QPaintEvent, QKeyEvent
+from PyQt4.Qt import QPoint, Qt
 from core.Managers import BlockManager
 from core.Utils import Mode
 from gui.Basics import Label, Input
@@ -31,6 +31,7 @@ class Container:
 
     def select(self, block):
         BlockManager.deselect_all()
+        self.deselect_all_lines()
         if block in self.blocks:
             block.select()
 
@@ -71,11 +72,49 @@ class Container:
     def create_label(self, name, n):
         return None
 
+    def get_line(self, p: QPoint):
+        if self.__mode == Mode.EDIT_GUI or self.__mode == Mode.RUN:
+            return None
+        for l in self.lines:
+            path = l.path()
+            if path.contains(p):
+                return l
+        return None
+
+    def get_selected_lines(self):
+        ll = []
+        for l in self.lines:
+            if l.selected:
+                ll.append(l)
+        return ll
+
+    def deselect_all_lines(self):
+        for l in self.lines:
+            l.selected = False
+
+    def delete_block(self, b):
+        if b in self.blocks:
+            self.blocks.remove(b)
+            b.delete()
+            BlockManager.remove_block(b)
+            b.deleteLater()
+
+    def delete_selected_elements(self):
+        bb = BlockManager.get_selected()
+        for b in bb:
+            self.delete_block(b)
+        ll = self.get_selected_lines()
+        for l in ll:
+            l.remove()
+
 
 class ContainerWidget(QWidget, Container):
     def __init__(self, parent: QWidget=None):
         QWidget.__init__(self, parent)
         Container.__init__(self)
+        self.setMouseTracking(True)
+        self.setFocusPolicy(Qt.ClickFocus)
+        self.setFocus()
 
     def add_line(self, line):
         Container.add_line(self, line)
@@ -111,6 +150,16 @@ class ContainerWidget(QWidget, Container):
         l.show()
         return l
 
+    def deselect_all_lines(self):
+        Container.deselect_all_lines(self)
+        self.repaint()
+
+    def keyPressEvent(self, e: QKeyEvent):
+        print('here')
+        if e.key() == Qt.Key_Delete:
+            self.delete_selected_elements()
+            self.repaint()
+
 
 class EditorContainer(ContainerWidget):
     def __init__(self, parent: QWidget=None):
@@ -124,4 +173,10 @@ class EditorContainer(ContainerWidget):
         # TODO add modes
 
     def mousePressEvent(self, e):
+        self.setFocus()
         BlockManager.deselect_all()
+        self.deselect_all_lines()
+        l = self.get_line(e.pos())
+        if l is not None:
+            l.selected = True
+            self.repaint()
