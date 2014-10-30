@@ -22,6 +22,7 @@ class Node:
         self.parent = parent
         self.pos = pos
         self.size = 9
+        self.__visible = True
 
     def type(self):
         return self.__type
@@ -77,6 +78,12 @@ class Node:
     def update(self):
         for l in self.lines:
             l.update()
+
+    def visible(self):
+        return self.__visible
+
+    def set_visible(self, vis):
+        self.__visible = vis
 
     def get_line(self):
         return None
@@ -153,6 +160,8 @@ class Line:
         self.__path = path
 
     def paint(self, p: QPainter):
+        if not self.n1.parent.isVisible() or (self.n2 is not None and not self.n2.parent.isVisible()):
+            return
         if self.__path is None:
             self.compute_path()
         c = Block.border_color
@@ -172,15 +181,13 @@ class Input(Node):
 
     def connect(self, out):
         if self.compatible(out):
-            if len(self.connections) >= 1:
-                self.lines[0].remove()
             self.connections.append(out)
             return True
         return False
 
     def get_line(self):
         if len(self.lines) > 0:
-            l = self.lines[0]
+            l = self.lines[len(self.lines) - 1]
             self.lines.remove(l)
             l.disconnect(self)
             return l
@@ -266,11 +273,25 @@ class Block(QWidget):
     def name(self):
         return self.settings["Name"].data()
 
+    def type_name(self):
+        return self.__type_name
+
     def mode(self):
         return self.__status
 
     def action(self):
         return self.__action
+
+    def setVisible(self, val):
+        QWidget.setVisible(self, val)
+        self.update_nodes()
+
+    def set_mode(self, mode):
+        self.__status = mode
+        if (mode == Mode.EDIT_LOGIC or mode == Mode.DEBUG) and not self.isVisible():
+            self.setVisible(True)
+        elif (mode == Mode.RUN or mode == Mode.EDIT_GUI) and self.isVisible():
+            self.setVisible(False)
 
     def __init_corner(self):
         path = QPainterPath()
@@ -434,8 +455,9 @@ class Block(QWidget):
             self.__label = None
 
         if self._resizable:
-            if abs(e.x() - self.width()) < 8 + Block.padding and abs(
-                            e.y() - self.height()) < 8 + Block.padding and self._check_action(Action.RESIZE):
+            if abs(e.x() - self.width()) < 8 + Block.padding \
+                    and abs(e.y() - self.height()) < 8 + Block.padding \
+                    and self._check_action(Action.RESIZE):
                 self.__origin = e.pos()
                 self.__action = Action.RESIZE
                 return
@@ -487,7 +509,6 @@ class Block(QWidget):
             self.parent().delete_label(self.__label)
             self.__label = None
 
-
     def mouseDoubleClickEvent(self, e: QMouseEvent):
         self._double_click()
 
@@ -519,9 +540,11 @@ class Block(QWidget):
         for k in self.outputs:
             o = self.outputs[k]
             o.pos.setX(x)
+            o.set_visible(self.isVisible())
             o.update()
         for k in self.inputs:
             i = self.inputs[k]
+            i.set_visible(self.isVisible())
             i.update()
 
     def _corner_path(self):
@@ -535,6 +558,14 @@ class WidgetBlock(Block):
         self._bg_color = QColor(77, 77, 77, 220)
         self.setMinimumHeight(60)
 
+    def set_mode(self, mode):
+        self.__status = mode
+        if (mode == Mode.EDIT_LOGIC or mode == Mode.DEBUG) and (self._widget is not None and self._widget.isVisible()):
+            self._widget.setVisible(False)
+        elif (mode == Mode.RUN or mode == Mode.EDIT_GUI) and \
+                (self._widget is not None and not self._widget.isVisible()):
+            self._widget.setVisible(True)
+
     def title_bg(self):
         return self._bg_color
 
@@ -542,6 +573,9 @@ class WidgetBlock(Block):
         self._widget = w
         if self.mode() == Mode.EDIT_LOGIC:
             w.setVisible(False)
+
+    def widget(self):
+        return self._widget
 
     def init_gui_settings(self):
         self.settings['X'] = Setting('X', IntegerValue(5))
@@ -554,11 +588,12 @@ class WidgetBlock(Block):
         self._paint_widget(p)
 
     def _paint_widget(self, p):
-        if self._widget is not None:
+        if self._widget is not None and (self.mode() == Mode.DEBUG or self.mode() == Mode.EDIT_LOGIC):
             p.setClipRect(Block.padding + 5, 5 + Block.padding, self.width() - 2 * Block.padding - 10,
                           25)
             p.translate(self.padding + 5, 5 + self.padding)
-            self._widget.render(p, QPoint(), QRegion(), QWidget.IgnoreMask)
+            self._widget.render(p, QPoint(), QRegion(0, 0, self.width(), 25),
+                                QWidget.IgnoreMask)
 
     def _paint_title(self, p: QPainter):
         f = p.font()
@@ -566,7 +601,8 @@ class WidgetBlock(Block):
         f.setPointSize(8)
         p.setPen(QColor(self._fg_color.red(), self._fg_color.green(), self._fg_color.blue(), 180))
         p.setFont(f)
-        p.drawText(QRectF(6 + Block.padding, 25 + Block.padding, self.width() - 12, 15), str(self.name()))
+        title = str(self.name()) + ' : ' + self.type_name()
+        p.drawText(QRectF(6 + Block.padding, 25 + Block.padding, self.width() - 12, 15), title)
 
     def _paint_bg(self, p: QPainter):
         pen = self.pen()

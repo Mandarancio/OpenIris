@@ -2,6 +2,7 @@ __author__ = 'martino'
 from PyQt4.QtGui import QWidget, QPalette, QColor, QPainter, QPaintEvent
 from PyQt4.Qt import QPoint
 from core.Managers import BlockManager
+from core.Utils import Mode
 from gui.Basics import Label, Input
 
 
@@ -10,11 +11,23 @@ class Container:
         self.blocks = []
         self.lines = []
         self.__parent = parent
+        self.__mode = Mode.EDIT_LOGIC
 
     def add_block(self, block):
         if not block in self.blocks:
             self.blocks.append(block)
             BlockManager.add_block(block)
+            block.set_mode(self.__mode)
+
+    def mode(self):
+        return self.__mode
+
+    def set_mode(self, mode):
+        if mode == self.__mode:
+            return
+        self.__mode = mode
+        for b in self.blocks:
+            b.set_mode(mode)
 
     def select(self, block):
         BlockManager.deselect_all()
