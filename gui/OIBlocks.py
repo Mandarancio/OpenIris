@@ -1,6 +1,6 @@
 __author__ = 'martino'
-from PyQt4.QtGui import QWidget, QPainter, QColor, QPen, QPaintEvent
-from PyQt4.QtCore import QRectF, QPoint
+from PyQt4.QtGui import QWidget, QPainter, QColor, QPen, QPaintEvent, QMouseEvent
+from PyQt4.QtCore import QRectF, QPoint, Qt
 
 
 class OINode:
@@ -34,13 +34,17 @@ class OIBlock(QWidget):
         QWidget.__init__(self, parent)
         self.__nodes = []
         self.__block = block
-        self.__selected = False
         self._resizable = False
         self.__block.repaint.connect(self.repaint)
         self._bg_color = QColor(159, 160, 144, 255)
         self._fg_color = QColor(255, 255, 255)
         self.setGeometry(block.get_setting('X'), block.get_setting('Y'), block.get_setting('Width'),
                          block.get_setting('Height'))
+
+        block.selected.connect(self.repaint)
+
+    def selected(self):
+        return self.__block.is_selected()
 
     def bg(self):
         return self._bg_color
@@ -59,8 +63,11 @@ class OIBlock(QWidget):
         # self._paint_outs(p)
         # self._paint_content(p)
 
+    def pen(self):
+        return OIBlock.selected_pen if self.selected() else OIBlock.border_pen
+
     def _paint_bg(self, p: QPainter):
-        pen = OIBlock.selected_pen if self.__selected else OIBlock.border_pen
+        pen = self.pen()
         p.setRenderHint(QPainter.Antialiasing, True)
         p.setPen(pen)
         p.setBrush(self.bg())
@@ -107,3 +114,8 @@ class OIBlock(QWidget):
         if e.isAccepted():
             p = QPainter(self)
             self._paint(p)
+
+    def mousePressEvent(self, e: QMouseEvent):
+        if e.button() == Qt.LeftButton:
+            self.__block.select()
+            print('here')
