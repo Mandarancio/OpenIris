@@ -67,7 +67,7 @@ class BlockManager:
     def get_selected():
         sel = []
         for o in BlockManager.objects:
-            if o.selected():
+            if o.is_selected():
                 sel.append(o)
         return sel
 
