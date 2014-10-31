@@ -2,7 +2,7 @@ __author__ = 'martino'
 from core.Settings import Setting
 from core.UValue import StringValue, BaseValue, FloatValue
 from core.Managers import BlockManager
-from core.Types import Type
+from core.Types import Type, PolyType
 from PyQt4.QtCore import pyqtSignal, QObject, QRect
 from gui.OIBlocks import *
 from gui.OIContainers import ContainerWidget
@@ -282,3 +282,17 @@ class BlockDefinition(QObject):
         h = self.get_setting('Height') * dpi
         return QRect(round(x), round(y), round(w), round(h))
 
+    def add_setting(self, setting: Setting):
+        if setting.name() not in self.settings:
+            self.settings[setting.name()] = setting
+
+
+class VariableDefinition(BlockDefinition):
+    def __init__(self, name: str, parent: Container, value: BaseValue=None):
+        BlockDefinition.__init__(self, 'Variable', name, parent)
+        self.add_setting(Setting('Value', value))
+        self.add_input(Input('Value', PolyType(), self))
+        self.add_output(Output('Value', PolyType(), self))
+
+    def get_widget(self, cont):
+        return OIVariableBlock(self, cont)

@@ -11,7 +11,7 @@ Info.dpi = a.desktop().logicalDpiX()
 print('DPI: ' + str(Info.dpi))
 
 test = Container('Test', None)
-val = BlockDefinition('Value', 'Test', test)
+val = VariableDefinition('Test', test)
 # val.settings['X'].set_data(-100)
 test.add_block(val)
 
@@ -24,7 +24,6 @@ mw.setLayout(l)
 
 w1 = test.get_widget(mw)
 w2 = test.get_widget(mw)
-print(w2)
 l.setMargin(0)
 l.setSpacing(1)
 l.addWidget(w1, 0, 0)

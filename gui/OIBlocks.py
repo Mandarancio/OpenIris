@@ -1,29 +1,32 @@
 __author__ = 'martino'
 from PyQt4.QtGui import QWidget, QPainter, QColor, QPen, QPaintEvent, QMouseEvent, QPainterPath, \
     QGraphicsDropShadowEffect
-from PyQt4.QtCore import QRectF, QPoint, Qt
-from core.Utils import Info, Mode, Action
+from PyQt4.QtCore import QRectF, QPointF, Qt, QPoint
+from core.Utils import Info, Mode, Action, Alignment
 
 
 class OINode:
-    def __init__(self, pos: QPoint, node):
+    def __init__(self, pos: QPointF, a: Alignment, node):
         self.__node = node
         self.pos = pos
-        self.size = 9
+        self.size = 0.09
+        self.alignment = a
         self.lines = []
 
     def type(self):
         return self.__node.type()
 
     def paint(self, p: QPainter):
-        p.setBrush(self.type().color())
-        p.drawEllipse(self.pos.x(), self.pos.y(), self.size, self.size)
-        if len(self.lines) > 0:
-            pen = p.pen()
-            p.setBrush(self.type().color().darker())
-            p.setPen(QColor(0, 0, 0, 0))
-            p.drawEllipse(self.pos.x() + 2, self.pos.y() + 2, self.size - 4, self.size - 4)
-            p.setPen(pen)
+        t = self.__node.type()
+        p.setBrush(self.__node.type().color())
+        p.drawEllipse(round(self.pos.x() * Info.dpi), round(self.pos.y() * Info.dpi), round(self.size * Info.dpi),
+                      round(self.size * Info.dpi))
+        # if len(self.lines) > 0:
+        # pen = p.pen()
+        # p.setBrush(self.type().color().darker())
+        # p.setPen(QColor(0, 0, 0, 0))
+        # p.drawEllipse(self.pos.x() + 2, self.pos.y() + 2, self.size - 4, self.size - 4)
+        #     p.setPen(pen)
 
 
 class OIBlock(QWidget):
@@ -47,8 +50,25 @@ class OIBlock(QWidget):
         self.__translation = QPoint()
         if self._resizable:
             self.__init_corner()
+        self.__init_nodes()
         self.__init_listeners()
         self.setMouseTracking(True)
+
+    def __init_nodes(self):
+        y = .45
+        x = .01
+        for k in self.__block.inputs:
+            i = self.__block.inputs[k]
+            n = OINode(QPointF(x, y), Alignment.Left, i)
+            self.__nodes.append(n)
+            y += 0.05 + n.size
+        x = self.width() / Info.dpi - .12
+        y = 0.45
+        for k in self.__block.outputs:
+            o = self.__block.outputs[k]
+            n = OINode(QPointF(x, y), Alignment.Right, o)
+            self.__nodes.append(n)
+            y += .05 + n.size
 
     def __init_listeners(self):
         self.__block.selected.connect(self.select)
@@ -75,6 +95,15 @@ class OIBlock(QWidget):
         r = self.__block.get_geometry(Info.dpi)
         r.translate(self.__translation)
         self.setGeometry(r)
+        self.__update_nodes()
+
+    def __update_nodes(self):
+        x = self.width() / Info.dpi - .12
+        for n in self.__nodes:
+            if n.alignment == Alignment.Right:
+                y = n.pos.y()
+                n.pos = QPointF(x, y)
+        self.repaint()
 
     def selected(self):
         return self.__block.is_selected()
@@ -91,8 +120,8 @@ class OIBlock(QWidget):
     def _paint(self, p: QPainter):
         self._paint_bg(p)
         self._paint_title(p)
-        # p.setPen(QPen(self.pen().brush(), 1))
-        # self._paint_ins(p)
+        p.setPen(QPen(self.pen().brush(), 0.01 * Info.dpi))
+        self._paint_nodes(p)
         # self._paint_outs(p)
         # self._paint_content(p)
 
@@ -153,10 +182,9 @@ class OIBlock(QWidget):
         path.closeSubpath()
         self.__corner_path = path
 
-    def _paint_ins(self, p: QPainter):
-        return
-
-    def _paint_outs(self, p: QPainter):
+    def _paint_nodes(self, p: QPainter):
+        for n in self.__nodes:
+            n.paint(p)
         return
 
     def _paint_content(self, p: QPainter):
@@ -234,3 +262,11 @@ class OIBlock(QWidget):
     def translate(self, p):
         self.__translation = p
         self.geometry_update()
+
+
+class OIVariableBlock(OIBlock):
+    def __init__(self, block, parent):
+        OIBlock.__init__(self, block, parent)
+        self._resizable = False
+        self._bg_color = QColor(233, 221, 175)
+        self._fg_color = QColor(0, 0, 0)
