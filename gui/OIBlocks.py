@@ -180,7 +180,6 @@ class OIBlock(QWidget):
     def mousePressEvent(self, e: QMouseEvent):
         if e.button() == Qt.LeftButton:
             self.__block.select()
-            print('here')
             if self._resizable:
                 if self._check_corner(e.pos()) and self._check_action(Action.RESIZE):
                     self.__origin = e.pos()
@@ -200,7 +199,7 @@ class OIBlock(QWidget):
         elif self.__action == Action.RESIZE:
             self.set_size(e.x(), e.y())
         else:
-            if self._resizable and self.__corner_path.translated(self.width(),self.height()).contains(e.pos()):
+            if self._resizable and self.__corner_path.translated(self.width(), self.height()).contains(e.pos()):
                 self.setCursor(Qt.SizeFDiagCursor)
             else:
                 self.setCursor(Qt.ArrowCursor)
@@ -215,9 +214,9 @@ class OIBlock(QWidget):
         W = self.__block.settings['Width'].value()
         H = self.__block.settings['Height'].value()
         if w1 < W.min:
-            w1 = w.min
+            w1 = W.min
         elif w1 > W.max:
-            w1 = w.max
+            w1 = W.max
         if h1 < H.min:
             h1 = H.min
         elif h1 > H.max:

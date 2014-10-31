@@ -213,9 +213,9 @@ class BlockDefinition(QObject):
         self.__add_setting(s)
         s = Setting('Y', FloatValue(.0))
         self.__add_setting(s)
-        s = Setting('Width', FloatValue(0.9))
+        s = Setting('Width', FloatValue(0.9, v_min=0.8))
         self.__add_setting(s)
-        s = Setting('Height', FloatValue(1.2))
+        s = Setting('Height', FloatValue(1.2, v_min=0.6))
         self.__add_setting(s)
 
     def __add_setting(self, s):
@@ -274,11 +274,11 @@ class BlockDefinition(QObject):
 
     def get_widget(self, cont):
         return OIBlock(self, cont)
-	
+
     def get_geometry(self, dpi=1.0):
-        x=self.get_setting('X')*dpi
-        y=self.get_setting('Y')*dpi
-        w=self.get_setting('Width')*dpi
-        h=self.get_setting('Height')*dpi
-        return QRect(round(x),round(y),round(w),round(h))
+        x = self.get_setting('X') * dpi
+        y = self.get_setting('Y') * dpi
+        w = self.get_setting('Width') * dpi
+        h = self.get_setting('Height') * dpi
+        return QRect(round(x), round(y), round(w), round(h))
 
