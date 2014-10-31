@@ -55,7 +55,7 @@ class ContainerWidget(QWidget):
         if e.button() == Qt.LeftButton:
             self.__moving = True
             self.__origin = e.pos()
-            self.setCursor(Qt.ClosedHandCursor)
+            self.setCursor(Qt.DragMoveCursor)
 
     def mouseDoubleClickEvent(self, e: QMouseEvent):
         BlockManager.deselect_all()

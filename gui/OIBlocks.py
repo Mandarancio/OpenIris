@@ -28,8 +28,6 @@ class OINode:
 
 class OIBlock(QWidget):
     border_color = QColor(137, 117, 89)
-    border_pen = QPen(border_color, 2)
-    selected_pen = QPen(border_color.lighter().lighter(), 2)
     padding = 0.05
     radius = 0.08
 
@@ -99,7 +97,8 @@ class OIBlock(QWidget):
         # self._paint_content(p)
 
     def pen(self):
-        return OIBlock.selected_pen if self.selected() else OIBlock.border_pen
+        p = QPen(OIBlock.border_color.lighter().lighter() if self.selected() else OIBlock.border_color, .02 * Info.dpi)
+        return p
 
     def _paint_bg(self, p: QPainter):
         dpi = Info.dpi
@@ -111,7 +110,7 @@ class OIBlock(QWidget):
                           self.height() - 2 * OIBlock.padding * dpi, OIBlock.radius * dpi, OIBlock.radius * dpi)
         p.setBrush(self.title_bg())
         p.drawRoundedRect(OIBlock.padding * dpi, OIBlock.padding * dpi, self.width() - 2 * OIBlock.padding * dpi,
-                          35 + OIBlock.padding * dpi, OIBlock.radius * dpi,
+                          .35 * dpi + OIBlock.padding * dpi, OIBlock.radius * dpi,
                           OIBlock.radius * dpi)
         p.setBrush(self.bg())
         p.setPen(QColor(0, 0, 0, 0))
@@ -191,7 +190,7 @@ class OIBlock(QWidget):
         if self._check_action(Action.DRAG):
             self.__origin = e.pos()
             self.__action = Action.DRAG
-            self.setCursor(Qt.ClosedHandCursor)
+            self.setCursor(Qt.DragMoveCursor)
 
     def mouseMoveEvent(self, e: QMouseEvent):
         if self.__action == Action.DRAG:
