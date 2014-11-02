@@ -1,6 +1,15 @@
 __author__ = 'martino'
 
-from PyQt4.QtGui import QWidget, QGridLayout, QPalette, QColor
+from PyQt4.QtGui import QWidget, QGridLayout, QPalette, QColor, QResizeEvent
+
+
+class OIDynBlock:
+    def __init__(self, width: float, height: float, parent):
+        self.width = width
+        self.height = height
+        self.parent = parent
+        self.h_child = None
+        self.v_child = None
 
 
 class OIWorkingSpace(QWidget):
@@ -8,10 +17,12 @@ class OIWorkingSpace(QWidget):
         QWidget.__init__(self, parent)
         # TODO Add intelligent and dynamic layout
 
-
     def add_ws_widget(self, w, row, col):
         # TODO do something
         return
+
+    def resizeEvent(self, e: QResizeEvent):
+        QWidget.resizeEvent(self, e)
 
 
 class OIWSWidget(QWidget):
