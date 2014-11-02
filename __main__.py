@@ -1,10 +1,15 @@
 __author__ = 'martino'
 from core.Definitions import *
 from core.Utils import Info
+from gui.OIWorkingSpace import *
 from PyQt4.QtGui import QApplication, QWidget, QGridLayout
 import sys
 
 a = QApplication(sys.argv)
+
+ws = OIWorkingSpace()
+w = OIWSWidget(ws)
+ws.show()
 
 Info.dpi = a.desktop().logicalDpiX()
 
@@ -16,7 +21,6 @@ val2 = VariableDefinition('B', test)
 # val.settings['X'].set_data(-100)
 test.add_block(val1)
 test.add_block(val2)
-
 
 mw = QWidget()
 mw.setWindowTitle('OpenIris')
