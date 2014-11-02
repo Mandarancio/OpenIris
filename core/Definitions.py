@@ -29,6 +29,18 @@ class Container(QObject):
             self.blocks.append(b)
             BlockManager.add_block(b)
             self.block_added.emit(b)
+            b.selected.connect(self.selected_block)
+
+    def selected_block(self, b:bool):
+        if b:
+            block = self.sender()
+            self.deselect_all(block)
+        return
+
+    def deselect_all(self, block=None):
+        for b in self.blocks:
+            if b.is_selected() and not b == block:
+                b.deselect()
 
     def remove_block(self, b):
         if b in self.blocks:

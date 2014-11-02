@@ -11,9 +11,11 @@ Info.dpi = a.desktop().logicalDpiX()
 print('DPI: ' + str(Info.dpi))
 
 test = Container('Test', None)
-val = VariableDefinition('Test', test)
+val1 = VariableDefinition('A', test)
+val2 = VariableDefinition('B', test)
 # val.settings['X'].set_data(-100)
-test.add_block(val)
+test.add_block(val1)
+test.add_block(val2)
 
 
 mw = QWidget()

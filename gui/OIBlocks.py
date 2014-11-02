@@ -26,7 +26,21 @@ class OINode:
         # p.setBrush(self.type().color().darker())
         # p.setPen(QColor(0, 0, 0, 0))
         # p.drawEllipse(self.pos.x() + 2, self.pos.y() + 2, self.size - 4, self.size - 4)
-        #     p.setPen(pen)
+        # p.setPen(pen)
+
+    def real_pos(self):
+        x = round(self.pos.x() * Info.dpi)
+        y = round(self.pos.y() * Info.dpi)
+        return QPoint(x, y)
+
+    def contains(self, p: QPoint):
+        d = self.size * Info.dpi
+        pos = self.real_pos()
+        dx = pos.x() - p.x()
+        dy = pos.y() - p.y()
+        if dx * dx + dy * dy <= d * d:
+            return True
+        return False
 
 
 class OIBlock(QWidget):
@@ -205,19 +219,29 @@ class OIBlock(QWidget):
             return False
         return True
 
+    def _check_nodes(self, p:QPoint):
+        for n in self.__nodes:
+            if n.contains(p):
+                return n
+        return None
+
     def mousePressEvent(self, e: QMouseEvent):
+        self.__block.select()
+        n = self._check_nodes(e.pos())
+        if n is not None:
+            print('Node found')
+            return
         if e.button() == Qt.LeftButton:
-            self.__block.select()
             if self._resizable:
                 if self._check_corner(e.pos()) and self._check_action(Action.RESIZE):
                     self.__origin = e.pos()
                     self.__action = Action.RESIZE
                     self.setCursor(Qt.SizeFDiagCursor)
                     return
-        if self._check_action(Action.DRAG):
-            self.__origin = e.pos()
-            self.__action = Action.DRAG
-            self.setCursor(Qt.DragMoveCursor)
+            if self._check_action(Action.DRAG):
+                self.__origin = e.pos()
+                self.__action = Action.DRAG
+                self.setCursor(Qt.DragMoveCursor)
 
     def mouseMoveEvent(self, e: QMouseEvent):
         if self.__action == Action.DRAG:
