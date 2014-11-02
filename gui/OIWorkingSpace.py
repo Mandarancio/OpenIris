@@ -6,6 +6,12 @@ from PyQt4.QtGui import QWidget, QGridLayout, QPalette, QColor
 class OIWorkingSpace(QWidget):
     def __int__(self, parent=None):
         QWidget.__init__(self, parent)
+        # TODO Add intelligent and dynamic layout
+
+
+    def add_ws_widget(self, w, row, col):
+        # TODO do something
+        return
 
 
 class OIWSWidget(QWidget):
@@ -25,3 +31,4 @@ class OIWSWidget(QWidget):
         self.__main_widget.setAutoFillBackground(True)
         self.__main_widget.setPalette(pal)
         self.__layout.addWidget(self.__main_widget, 1, 0)
+
