@@ -9,12 +9,28 @@ from gui.OIContainers import ContainerWidget
 
 
 class Definition(QObject):
+    selected = pyqtSignal(bool)
+    changed_setting = pyqtSignal(Setting)
+    repaint = pyqtSignal()
+
     def __init__(self, type_name: str, name: str, parent=None):
         QObject.__init__(self, parent)
         self._type = type_name
         self.settings = {'Name': Setting('Name', StringValue(name))}
         self._complex = False
         self._parent = parent
+        self._selected = False
+
+    def is_selected(self):
+        return self._selected
+
+    def select(self):
+        self._selected = True
+        self.selected.emit(self._selected)
+
+    def deselect(self):
+        self._selected = False
+        self.selected.emit(self._selected)
 
     def type_name(self):
         return self._type
@@ -22,7 +38,7 @@ class Definition(QObject):
     def name(self):
         return self.settings['Name'].data()
 
-    def set_name(self, name: str):
+    def set_name(self, name:str):
         self.settings['Name'].set_data(name)
 
     def is_complex(self):
@@ -241,10 +257,6 @@ class Output(Node):
 
 
 class BlockDefinition(Definition):
-    selected = pyqtSignal(bool)
-    changed_setting = pyqtSignal(Setting)
-    repaint = pyqtSignal()
-
     def __init__(self, type_name: str, name: str, parent: Container):
         Definition.__init__(self, type_name, name, parent)
         self.inputs = {}
@@ -280,17 +292,6 @@ class BlockDefinition(Definition):
             self.inputs[k].deconnect_all()
         for k in self.outputs:
             self.outputs[k].deconnect_all()
-
-    def is_selected(self):
-        return self._selected
-
-    def select(self):
-        self._selected = True
-        self.selected.emit(self._selected)
-
-    def deselect(self):
-        self._selected = False
-        self.selected.emit(self._selected)
 
     def parent_container(self):
         return self._parent

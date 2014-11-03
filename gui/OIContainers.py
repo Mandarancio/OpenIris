@@ -56,6 +56,8 @@ class ContainerWidget(QWidget):
             self.__moving = True
             self.__origin = e.pos()
             self.setCursor(Qt.DragMoveCursor)
+        elif e.button() == Qt.RightButton:
+            self.show_popup(e.pos())
 
     def mouseDoubleClickEvent(self, e: QMouseEvent):
         BlockManager.deselect_all()
@@ -63,6 +65,9 @@ class ContainerWidget(QWidget):
             self.__moving = False
             self.__translation = QPoint()
             self.translate(0, 0)
+
+    def show_popup(self, pos):
+        print('here')
 
     def mouseMoveEvent(self, e: QMouseEvent):
         if self.__moving:

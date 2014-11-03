@@ -1,11 +1,12 @@
 __author__ = 'martino'
 
-from PyQt4.QtGui import QWidget, QGridLayout, QPalette, QColor, QResizeEvent, QComboBox, QPainter, QPaintEvent, \
-    QMouseEvent, QPushButton, QIcon
+from PyQt4.QtGui import QWidget, QGridLayout, QPalette, QColor, QResizeEvent, QMenu, QPainter, QPaintEvent, \
+    QMouseEvent, QPushButton, QIcon, QToolBar, QAction
 from PyQt4.QtCore import Qt, QPoint, SIGNAL
 
-from core.Utils import Action, Alignment, Info
+from core.Utils import Action, Alignment, Info, ViewMode
 from gui.Css_Ui import Window_Button, Menu_Button
+from core.Managers import BlockManager
 
 
 class OIDynBlock:
@@ -20,31 +21,23 @@ class OIDynBlock:
         return
 
 
-class OIToolBar(QWidget):
+class OIToolBar(QToolBar):
     def __init__(self, parent):
-        QWidget.__init__(self, parent)
-
+        QToolBar.__init__(self, parent)
         self.__objects = []
         self.init()
         self.__type = None
+        self.__mode = ViewMode
+
+    def mode(self):
+        return self.__mode
 
     def init(self):
-        qb = QComboBox(self)
-        qb.addItem('Viewer')
-        qb.addItem('Tree')
-        qb.addItem('Node')
-        self.add_object(qb, int(round(0.75 * Info.dpi)))
-        self.__type = qb
-
-    def add_object(self, obj: QWidget, width=1):
-        x = 1
-        y = 1
-        h = self.height() - 2
-        w = width
-        for o in self.__objects:
-            x += o.width() + 2
-        obj.setGeometry(x, y, w, h - 2)
-        self.__objects.append(obj)
+        menu = QMenu('', self)
+        menu.menuAction().setIcon(QIcon('rsc/window-close.png'))
+        menu.addAction(QAction(QIcon('rsc/window-close.png'), 'Scene', self))
+        self.addAction(menu.menuAction())
+        return
 
 
 class OIWSWidget(QWidget, OIDynBlock):
@@ -59,12 +52,11 @@ class OIWSWidget(QWidget, OIDynBlock):
         self.__toolbar = OIToolBar(self)
         self.__toolbar.setMaximumHeight(0.3 * Info.dpi)
         self.__layout.addWidget(self.__toolbar, 0, 0)
-        self.__main_widget = QWidget(self)
+        self.__main_widget = BlockManager.get_viewer(ViewMode.Scene, self)
         pal = QPalette(self.__main_widget.palette())
         pal.setColor(self.backgroundRole(), QColor(55, 50, 47))
         self.__main_widget.setAutoFillBackground(True)
         self.__main_widget.setPalette(pal)
-
         self.__layout.addWidget(self.__main_widget, 1, 0)
 
     def update_size(self, x, y, w, h):
@@ -276,5 +268,4 @@ class OIWindow(QWidget):
             return Qt.SizeVerCursor
         if pos is Alignment.BottomLeft or pos is Alignment.TopRight:
             return Qt.SizeBDiagCursor
-        else:
-            return Qt.SizeFDiagCursor
+        return Qt.SizeFDiagCursor

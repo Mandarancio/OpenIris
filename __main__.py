@@ -1,11 +1,15 @@
 __author__ = 'martino'
 # from core.Definitions import *
 from core.Utils import Info
+from core.Managers import BlockManager
+from core.Definitions import Container
 from gui.OIWorkSpace import OIWindow
 from PyQt4.QtGui import QApplication  # , QWidget, QGridLayout
 import sys
 
 a = QApplication(sys.argv)
+BlockManager.root = Container('Root')
+BlockManager.objects.append(BlockManager.root)
 Info.dpi = a.desktop().logicalDpiX()
 
 window = OIWindow()

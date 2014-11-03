@@ -37,3 +37,8 @@ class Alignment(Enum):
     TopRight =5
     BottomLeft = 6
     BottomRight = 7
+
+class ViewMode(Enum):
+    Scene = 0
+    Node = 1
+    Tree = 2

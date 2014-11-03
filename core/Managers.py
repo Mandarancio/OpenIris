@@ -1,7 +1,7 @@
 __author__ = 'martino'
 
 from core.UValue import *
-from core.Definitions import Container
+from core.Utils import ViewMode
 
 
 def remove_index(name):
@@ -19,8 +19,7 @@ def remove_index(name):
 
 
 class TypeManager:
-    root = Container('Root')
-    types = [root]
+    types = []
 
     @staticmethod
     def add_type(t):
@@ -40,6 +39,7 @@ class TypeManager:
 
 
 class BlockManager:
+    root = None
     objects = []
 
     #
@@ -90,6 +90,11 @@ class BlockManager:
                 i += 1
         n += '.' + str(i)
         return n
+
+    @staticmethod
+    def get_viewer(mode, parent):
+        if mode == ViewMode.Scene:
+            return BlockManager.root.get_widget(parent)
 
 
 class ValueManager:
