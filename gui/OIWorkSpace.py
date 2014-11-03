@@ -30,6 +30,7 @@ class OIDynBlock:
 class OIToolBar(QToolBar):
     def __init__(self, parent):
         QToolBar.__init__(self, parent)
+        self.setAutoFillBackground(True)
         self.__objects = []
         self.init()
         self.__type = None
@@ -75,6 +76,7 @@ class OIWSWidget(QWidget, OIDynBlock):
         self.__main_widget.setAutoFillBackground(True)
         self.__main_widget.setPalette(pal)
         self.__layout.addWidget(self.__main_widget, 1, 0)
+        self.setMouseTracking(True)
 
     def update_size(self, x, y, w, h):
         ww = round(w * self._width)
@@ -111,6 +113,32 @@ class OIWSWidget(QWidget, OIDynBlock):
 
     def get_toolbar(self):
         return self.__toolbar
+
+    def mousePressEvent(self, e: QMouseEvent):
+        print(self.get_border(e.pos()))
+
+    def mouseMoveEvent(self, e: QMouseEvent):
+        self.setCursor(self.get_cursor(e.pos()))
+
+    def get_cursor(self, p: QPaintEvent):
+        b = self.get_border(p)
+        if b is None:
+            return Qt.ArrowCursor
+        elif b == Alignment.Left or b == Alignment.Right:
+            return Qt.SizeHorCursor
+        else:
+            return Qt.SizeVerCursor
+
+    def get_border(self, p: QPoint):
+        if p.x() <= 2:
+            return Alignment.Left
+        elif p.x() >= self.width() - 2:
+            return Alignment.Right
+        elif p.y() <= 2:
+            return Alignment.Top
+        elif p.y() >= self.height() - 2:
+            return Alignment.Bottom
+        return None
 
 
 class OIWorkSpace(QWidget):
