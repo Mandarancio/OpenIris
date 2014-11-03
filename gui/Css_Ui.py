@@ -13,3 +13,21 @@ Button_Ui = 'QPushButton{' \
             'border: 1px solid #fff;' \
             'border-radius: 4px;' \
             '}'
+
+Window_Button = 'background-color: rgba(0,0,0,100);' \
+                'color: #fff;' \
+                'text-align: center;' \
+                'border-radius: 2px;' \
+                'border-width: 0px;' \
+                'margin: 0;' \
+                'spacing: 0;' \
+                'padding: 0;'
+
+Menu_Button = 'background-color: rgba(0,0,0,80);' \
+              'color: #000;' \
+              'text-align: center;' \
+              'border-radius: 2px;' \
+              'border-width: 0px;' \
+              'margin: 0;' \
+              'spacing: 0;' \
+              'padding: 0;'

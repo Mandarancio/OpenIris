@@ -8,20 +8,57 @@ from gui.OIBlocks import *
 from gui.OIContainers import ContainerWidget
 
 
-class Container(QObject):
+class Definition(QObject):
+    def __init__(self, type_name: str, name: str, parent=None):
+        QObject.__init__(self, parent)
+        self._type = type_name
+        self.settings = {'Name': Setting('Name', StringValue(name))}
+        self._complex = False
+        self._parent = parent
+
+    def type_name(self):
+        return self._type
+
+    def name(self):
+        return self.settings['Name'].data()
+
+    def set_name(self, name: str):
+        self.settings['Name'].set_data(name)
+
+    def is_complex(self):
+        return self._complex
+
+    def sub_elements(self):
+        return []
+
+    def _add_setting(self, s):
+        self.settings[s.name()] = s
+
+    def set_setting(self, name, data):
+        if name in self.settings:
+            s = self.settings[name]
+            s.set_data(data)
+            self.changed_setting.emit(s)
+
+    def get_setting(self, name):
+        if name in self.settings:
+            return self.settings[name].data()
+        return None
+
+
+class Container(Definition):
     update = pyqtSignal()
     block_added = pyqtSignal(object)
     block_removed = pyqtSignal(object)
 
     def __init__(self, name: str, parent=None):
-        QObject.__init__(self, parent)
+        Definition.__init__(self, 'Container', name, parent)
         self.blocks = []
         self.lines = []
-        self.__name = name
-        self.__parent = parent
+        self.__complex = True
 
-    def name(self):
-        return self.__name
+    def sub_elements(self):
+        return self.blocks
 
     def add_block(self, b):
         if b not in self.blocks:
@@ -31,7 +68,7 @@ class Container(QObject):
             self.block_added.emit(b)
             b.selected.connect(self.selected_block)
 
-    def selected_block(self, b:bool):
+    def selected_block(self, b: bool):
         if b:
             block = self.sender()
             self.deselect_all(block)
@@ -203,38 +240,29 @@ class Output(Node):
         return l
 
 
-class BlockDefinition(QObject):
+class BlockDefinition(Definition):
     selected = pyqtSignal(bool)
     changed_setting = pyqtSignal(Setting)
     repaint = pyqtSignal()
 
     def __init__(self, type_name: str, name: str, parent: Container):
-        QObject.__init__(self, parent)
-        self.settings = {'Name': Setting('Name', StringValue(name))}
+        Definition.__init__(self, type_name, name, parent)
         self.inputs = {}
         self.outputs = {}
         self.trig_in = {}
         self.trig_out = {}
-        self._parent = parent
-        self._type = type_name
         self._selected = False
         self.init_settings()
 
     def init_settings(self):
         s = Setting('X', FloatValue(.0))
-        self.__add_setting(s)
+        self._add_setting(s)
         s = Setting('Y', FloatValue(.0))
-        self.__add_setting(s)
+        self._add_setting(s)
         s = Setting('Width', FloatValue(0.9, v_min=0.8))
-        self.__add_setting(s)
+        self._add_setting(s)
         s = Setting('Height', FloatValue(1.2, v_min=0.6))
-        self.__add_setting(s)
-
-    def __add_setting(self, s):
-        self.settings[s.name()] = s
-
-    def name(self):
-        return self.settings['Name'].data()
+        self._add_setting(s)
 
     def updated(self):
         self.repaint.emit()
@@ -252,20 +280,6 @@ class BlockDefinition(QObject):
             self.inputs[k].deconnect_all()
         for k in self.outputs:
             self.outputs[k].deconnect_all()
-
-    def set_setting(self, name, data):
-        if name in self.settings:
-            s = self.settings[name]
-            s.set_data(data)
-            self.changed_setting.emit(s)
-
-    def get_setting(self, name):
-        if name in self.settings:
-            return self.settings[name].data()
-        return None
-
-    def type_name(self):
-        return self._type
 
     def is_selected(self):
         return self._selected

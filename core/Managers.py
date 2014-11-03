@@ -1,6 +1,7 @@
 __author__ = 'martino'
 
 from core.UValue import *
+from core.Definitions import Container
 
 
 def remove_index(name):
@@ -18,7 +19,8 @@ def remove_index(name):
 
 
 class TypeManager:
-    types = []
+    root = Container('Root')
+    types = [root]
 
     @staticmethod
     def add_type(t):
@@ -39,10 +41,11 @@ class TypeManager:
 
 class BlockManager:
     objects = []
+
     #
     # @staticmethod
     # def name_changed(value, parent):
-    #     print(value.data())
+    # print(value.data())
 
     @staticmethod
     def get_block(name: str):
