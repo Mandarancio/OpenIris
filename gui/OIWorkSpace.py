@@ -7,6 +7,12 @@ from PyQt4.QtCore import Qt, QPoint, SIGNAL
 from core.Utils import Action, Alignment, Info, ViewMode
 from gui.Css_Ui import Window_Button, Menu_Button
 from core.Managers import BlockManager
+from enum import Enum
+
+
+class Orientation(Enum):
+    Horizontal = 0
+    Vertical = 1
 
 
 class OIDynBlock:
@@ -34,8 +40,19 @@ class OIToolBar(QToolBar):
 
     def init(self):
         menu = QMenu('', self)
-        menu.menuAction().setIcon(QIcon('rsc/window-close.png'))
-        menu.addAction(QAction(QIcon('rsc/window-close.png'), 'Scene', self))
+        menu.menuAction().setIcon(QIcon('rsc/scene.png'))
+        a = QAction('Scene', self)
+        a.setIconVisibleInMenu(True)
+        a.setIcon(QIcon('rsc/scene.png'))
+        menu.addAction(a)
+        a = QAction('Node', self)
+        a.setIcon(QIcon('rsc/node.png'))
+        a.setIconVisibleInMenu(True)
+        menu.addAction(a)
+        a = QAction('Tree', self)
+        a.setIcon(QIcon('rsc/tree.png'))
+        a.setIconVisibleInMenu(True)
+        menu.addAction(a)
         self.addAction(menu.menuAction())
         return
 
@@ -47,7 +64,7 @@ class OIWSWidget(QWidget, OIDynBlock):
         self.setMinimumSize(0.4 * Info.dpi, 0.4 * Info.dpi)
         self.__layout = QGridLayout(self)
         self.__layout.setSpacing(0)
-        self.__layout.setMargin(1)
+        self.__layout.setMargin(2)
         self.setLayout(self.__layout)
         self.__toolbar = OIToolBar(self)
         self.__toolbar.setMaximumHeight(0.3 * Info.dpi)
@@ -64,12 +81,12 @@ class OIWSWidget(QWidget, OIDynBlock):
         hh = round(h * self._height)
         self.setGeometry(x, y, ww, hh)
         if self._h_child is not None:
-            x = self.x() + ww + 1
+            x = self.x() + ww
             y = self.y()
             self._h_child.update_size(x, y, w, h)
         if self._v_child is not None:
             x = self.x()
-            y = self.y() + hh + 1
+            y = self.y() + hh
             self._v_child.update_size(x, y, w, h)
 
     def h_split(self, h: float):
@@ -77,7 +94,7 @@ class OIWSWidget(QWidget, OIDynBlock):
         self._width -= h
         w = OIWSWidget(h, 1, self.parent())
         self.setGeometry(self.x(), self.y(), self.width() * (self._width - h), self.height())
-        w.setGeometry(self.x() + self.width() * (self._width - h) + 1, self.y(), self.width() * h, self.height())
+        w.setGeometry(self.x() + self.width() * (self._width - h), self.y(), self.width() * h, self.height())
         self._h_child = w
         w._h_child = h_p
         return w
@@ -105,15 +122,12 @@ class OIWorkSpace(QWidget):
         pal.setColor(self.backgroundRole(), QColor(105, 100, 97))
         self.setPalette(pal)
         self.setAutoFillBackground(True)
-        # TODO Add intelligent and dynamic layout
         self.__c_widget = OIWSWidget(1, 1, self)
-        self.__c_widget.setGeometry(0.01 * Info.dpi, 0.01 * Info.dpi, self.width() - 0.02 * Info.dpi,
-                                    self.height() - 0.02 * Info.dpi)
+        self.__c_widget.setGeometry(0, 0, self.width(), self.height())
 
     def resizeEvent(self, e: QResizeEvent):
         QWidget.resizeEvent(self, e)
-        self.__c_widget.update_size(0.01 * Info.dpi, 0.01 * Info.dpi, self.width() - 0.02 * Info.dpi,
-                                    self.height() - 0.02 * Info.dpi)
+        self.__c_widget.update_size(0, 0, self.width(), self.height())
 
     def central_widget(self):
         return self.__c_widget
@@ -257,6 +271,7 @@ class OIWindow(QWidget):
             return Alignment.Top
         if pos.y() >= self.height() - 5:
             return Alignment.Bottom
+        return None
 
     @staticmethod
     def get_cursor(pos: Alignment):
