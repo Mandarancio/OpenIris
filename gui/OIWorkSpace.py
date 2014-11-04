@@ -1,11 +1,10 @@
 __author__ = 'martino'
 
-from PyQt4.QtGui import QWidget, QGridLayout, QPalette, QColor, QResizeEvent, QMenu, QPainter, QPaintEvent, \
-    QMouseEvent, QPushButton, QIcon, QToolBar, QAction
-from PyQt4.QtCore import Qt, QPoint, SIGNAL
+from PyQt4.QtGui import QWidget, QGridLayout, QPalette, QColor, QResizeEvent, QMenu, \
+    QMouseEvent, QIcon, QToolBar, QAction
+from PyQt4.QtCore import Qt, QPoint
 
-from core.Utils import Action, Alignment, Info, ViewMode
-from gui.Css_Ui import Window_Button, Menu_Button
+from core.Utils import Alignment, Info, ViewMode
 from core.Managers import BlockManager
 from enum import Enum
 
@@ -30,6 +29,9 @@ class OIDynBlock:
 class OIToolBar(QToolBar):
     def __init__(self, parent):
         QToolBar.__init__(self, parent)
+        pal = QPalette(self.palette())
+        pal.setColor(self.backgroundRole(), QColor(105, 100, 97))
+        self.setPalette(pal)
         self.setAutoFillBackground(True)
         self.__objects = []
         self.init()
@@ -52,6 +54,9 @@ class OIToolBar(QToolBar):
         menu.addAction(a)
         a = QAction('Tree', self)
         a.setIcon(QIcon('rsc/tree.png'))
+        a.setIconVisibleInMenu(True)
+        menu.addAction(a)
+        a = QAction(QIcon('rsc/menu.png'), 'Menu', self)
         a.setIconVisibleInMenu(True)
         menu.addAction(a)
         self.addAction(menu.menuAction())

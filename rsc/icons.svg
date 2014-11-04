@@ -24,9 +24,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="15.007006"
-     inkscape:cx="34.291221"
-     inkscape:cy="1052.6666"
+     inkscape:zoom="10.611556"
+     inkscape:cx="9.4001576"
+     inkscape:cy="1040.371"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -263,6 +263,97 @@
              x="34.480923"
              id="tspan3830"
              sodipodi:role="line">var</tspan></text>
+      </g>
+    </g>
+    <rect
+       style="fill:#4d4d4d;fill-opacity:1;stroke:none"
+       id="rect3021"
+       width="16"
+       height="16"
+       x="2.7158334"
+       y="24.462566"
+       rx="0"
+       ry="0"
+       inkscape:export-filename="/home/martino/PycharmProjects/OpenIris/rsc/menu.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180" />
+    <g
+       transform="translate(-24.505203,18.704427)"
+       id="g3023">
+      <g
+         id="g3819"
+         transform="translate(-1.2686157e-7,-0.04593341)">
+        <rect
+           style="fill:#333333;fill-opacity:1;stroke:#272727;stroke-width:0.28777331;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+           id="rect3029"
+           width="10.645252"
+           height="3.6863346"
+           x="28.082592"
+           y="6.9632401"
+           rx="0.8481316"
+           ry="0.84813154" />
+        <text
+           sodipodi:linespacing="125%"
+           id="text3031"
+           y="10.023123"
+           x="28.730286"
+           style="font-size:3.88019848px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Source Sans Pro;-inkscape-font-specification:Source Sans Pro"
+           xml:space="preserve"><tspan
+             y="10.023123"
+             x="28.730286"
+             id="tspan3033"
+             sodipodi:role="line">Menu</tspan></text>
+        <rect
+           ry="0.84813154"
+           rx="0.84813154"
+           y="11.061325"
+           x="28.082592"
+           height="9.58358"
+           width="14.27689"
+           id="rect3035"
+           style="fill:#d5d5d5;fill-opacity:1;stroke:#272727;stroke-width:0.28777331;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+        <rect
+           ry="0"
+           rx="0"
+           y="14.069124"
+           x="28.227562"
+           height="2.4737184"
+           width="13.994179"
+           id="rect3037"
+           style="fill:#333333;fill-opacity:1;stroke:none" />
+        <text
+           xml:space="preserve"
+           style="font-size:2.80636644px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#1a1a1a;fill-opacity:1;stroke:none;font-family:Source Sans Pro;-inkscape-font-specification:Source Sans Pro"
+           x="28.732693"
+           y="13.665804"
+           id="text3807"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan3809"
+             x="28.732693"
+             y="13.665804">File</tspan></text>
+        <text
+           sodipodi:linespacing="125%"
+           id="text3811"
+           y="16.239475"
+           x="28.732693"
+           style="font-size:2.80636644px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Source Sans Pro;-inkscape-font-specification:Source Sans Pro"
+           xml:space="preserve"><tspan
+             y="16.239475"
+             x="28.732693"
+             id="tspan3813"
+             sodipodi:role="line">Save</tspan></text>
+        <text
+           sodipodi:linespacing="125%"
+           id="text3815"
+           y="20.048679"
+           x="28.732693"
+           style="font-size:2.80636644px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#1a1a1a;fill-opacity:1;stroke:none;font-family:Source Sans Pro;-inkscape-font-specification:Source Sans Pro"
+           xml:space="preserve"><tspan
+             y="20.048679"
+             x="28.732693"
+             id="tspan3817"
+             sodipodi:role="line">Exit</tspan></text>
       </g>
     </g>
   </g>
