@@ -2,7 +2,7 @@ __author__ = 'martino'
 
 from PyQt4.QtGui import QWidget, QGridLayout, QPalette, QColor, QResizeEvent, QMenu, \
     QMouseEvent, QIcon, QToolBar, QAction
-from PyQt4.QtCore import Qt, QPoint
+from PyQt4.QtCore import Qt, QPoint, SIGNAL, SLOT, pyqtSlot
 
 from core.Utils import Alignment, Info, ViewMode
 from core.Managers import BlockManager
@@ -37,6 +37,7 @@ class OIToolBar(QToolBar):
         self.init()
         self.__type = None
         self.__mode = ViewMode
+        self.__menu = None
 
     def mode(self):
         return self.__mode
@@ -44,23 +45,31 @@ class OIToolBar(QToolBar):
     def init(self):
         menu = QMenu('', self)
         menu.menuAction().setIcon(QIcon('rsc/scene.png'))
-        a = QAction('Scene', self)
+        a = QAction(QIcon('rsc/scene.png'), 'Scene', self)
         a.setIconVisibleInMenu(True)
-        a.setIcon(QIcon('rsc/scene.png'))
+        self.connect(a, SIGNAL('triggered()'), self.menu_action)
         menu.addAction(a)
-        a = QAction('Node', self)
-        a.setIcon(QIcon('rsc/node.png'))
-        a.setIconVisibleInMenu(True)
-        menu.addAction(a)
-        a = QAction('Tree', self)
-        a.setIcon(QIcon('rsc/tree.png'))
+        a = QAction(QIcon('rsc/node.png'), 'Node', self)
         a.setIconVisibleInMenu(True)
         menu.addAction(a)
+        self.connect(a, SIGNAL('triggered()'), self.menu_action)
+        a = QAction(QIcon('rsc/tree.png'), 'Tree', self)
+        a.setIconVisibleInMenu(True)
+        menu.addAction(a)
+        self.connect(a, SIGNAL('triggered()'), self.menu_action)
         a = QAction(QIcon('rsc/menu.png'), 'Menu', self)
         a.setIconVisibleInMenu(True)
+        self.connect(a, SIGNAL('triggered()'), self.menu_action)
         menu.addAction(a)
         self.addAction(menu.menuAction())
+        self.__menu = menu
         return
+
+    @pyqtSlot()
+    def menu_action(self):
+        a = self.sender()
+        self.__menu.menuAction().setIcon(a.icon())
+        print(a)
 
 
 class OIWSWidget(QWidget, OIDynBlock):
