@@ -3,7 +3,7 @@ __author__ = 'martino'
 from core.Utils import Info
 from core.Managers import BlockManager
 from core.Definitions import Container
-from gui.OIWorkSpace import OIWindow
+from gui.OIWorkSpace import OIWorkSpace
 from PyQt4.QtGui import QApplication  # , QWidget, QGridLayout
 import sys
 
@@ -12,8 +12,8 @@ BlockManager.root = Container('Root')
 BlockManager.objects.append(BlockManager.root)
 Info.dpi = a.desktop().logicalDpiX()
 
-window = OIWindow()
-ws = window.workspace
+window = OIWorkSpace()
+ws = window
 w1 = ws.central_widget().h_split(0.2)
 w1.v_split(0.3)
 window.show()
